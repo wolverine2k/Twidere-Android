@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--suppress AndroidElementNotAllowed -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:title="@string/auto_refresh">
 
-    <org.mariotaku.twidere.preference.AutoFixSwitchPreference
+    <SwitchPreferenceCompat
         android:disableDependentsState="false"
         android:key="auto_refresh"
         android:title="@string/auto_refresh"/>
@@ -12,19 +13,19 @@
         android:dependency="auto_refresh"
         android:key="cat_refresh_content"
         android:title="@string/content_to_refresh">
-        <CheckBoxPreference
+        <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="auto_refresh_home_timeline"
             android:title="@string/home"/>
-        <CheckBoxPreference
+        <SwitchPreferenceCompat
             android:defaultValue="true"
             android:key="auto_refresh_mentions"
             android:title="@string/mentions"/>
-        <CheckBoxPreference
+        <SwitchPreferenceCompat
             android:defaultValue="true"
             android:key="auto_refresh_direct_messages"
             android:title="@string/direct_messages"/>
-        <CheckBoxPreference
+        <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="auto_refresh_trends"
             android:title="@string/trends"/>
@@ -35,7 +36,7 @@
         <!--android:key="cat_streaming"-->
         <!--android:title="@string/streaming">-->
 
-        <!--<org.mariotaku.twidere.preference.AutoFixSwitchPreference-->
+        <!--<SwitchPreference-->
             <!--android:key="enable_streaming"-->
             <!--android:title="@string/enable_streaming"/>-->
 

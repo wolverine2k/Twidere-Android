@@ -20,9 +20,14 @@
 package org.mariotaku.twidere.util;
 
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.model.ParcelableStatus;
+import org.mariotaku.twidere.model.ParcelableUser;
+import org.mariotaku.twidere.model.UserKey;
 
 /**
  * Created by mariotaku on 15/3/14.
@@ -30,37 +35,31 @@ import org.mariotaku.twidere.model.ParcelableStatus;
 public class LinkCreator implements Constants {
 
     private static final String AUTHORITY_TWITTER = "twitter.com";
+    private static final String AUTHORITY_FANFOU = "fanfou.com";
 
-    public static Uri getTwitterStatusLink(String screenName, long statusId) {
-        Uri.Builder builder = new Uri.Builder();
-        builder.scheme(SCHEME_HTTPS);
-        builder.authority(AUTHORITY_TWITTER);
-        builder.appendPath(screenName);
-        builder.appendPath("status");
-        builder.appendPath(String.valueOf(statusId));
-        return builder.build();
+    private LinkCreator() {
     }
 
-    public static Uri getTwidereStatusLink(long accountId, long statusId) {
+    public static Uri getTwidereStatusLink(UserKey accountKey, @NonNull String statusId) {
         final Uri.Builder builder = new Uri.Builder();
         builder.scheme(SCHEME_TWIDERE);
         builder.authority(AUTHORITY_STATUS);
-        if (accountId > 0) {
-            builder.appendQueryParameter(QUERY_PARAM_ACCOUNT_ID, String.valueOf(accountId));
+        if (accountKey != null) {
+            builder.appendQueryParameter(QUERY_PARAM_ACCOUNT_KEY, accountKey.toString());
         }
-        builder.appendQueryParameter(QUERY_PARAM_STATUS_ID, String.valueOf(statusId));
+        builder.appendQueryParameter(QUERY_PARAM_STATUS_ID, statusId);
         return builder.build();
     }
 
-    public static Uri getTwidereUserLink(long accountId, long userId, String screenName) {
+    public static Uri getTwidereUserLink(@Nullable UserKey accountKey, @Nullable UserKey userKey, String screenName) {
         final Uri.Builder builder = new Uri.Builder();
         builder.scheme(SCHEME_TWIDERE);
         builder.authority(AUTHORITY_USER);
-        if (accountId > 0) {
-            builder.appendQueryParameter(QUERY_PARAM_ACCOUNT_ID, String.valueOf(accountId));
+        if (accountKey != null) {
+            builder.appendQueryParameter(QUERY_PARAM_ACCOUNT_KEY, accountKey.toString());
         }
-        if (userId > 0) {
-            builder.appendQueryParameter(QUERY_PARAM_USER_ID, String.valueOf(userId));
+        if (userKey != null) {
+            builder.appendQueryParameter(QUERY_PARAM_USER_KEY, userKey.toString());
         }
         if (screenName != null) {
             builder.appendQueryParameter(QUERY_PARAM_SCREEN_NAME, screenName);
@@ -77,7 +76,54 @@ public class LinkCreator implements Constants {
         return builder.build();
     }
 
-    public static Uri getTwitterUserLink(String screenName) {
+    @NonNull
+    public static Uri getStatusWebLink(ParcelableStatus status) {
+        if (status.extras != null && !TextUtils.isEmpty(status.extras.external_url)) {
+            return Uri.parse(status.extras.external_url);
+        }
+        if (USER_TYPE_FANFOU_COM.equals(status.account_key.getHost())) {
+            return getFanfouStatusLink(status.id);
+        }
+        return getTwitterStatusLink(status.user_screen_name, status.id);
+    }
+
+    public static Uri getQuotedStatusWebLink(ParcelableStatus status) {
+        if (status.extras != null) {
+            if (!TextUtils.isEmpty(status.extras.quoted_external_url)) {
+                return Uri.parse(status.extras.quoted_external_url);
+            } else if (!TextUtils.isEmpty(status.extras.external_url)) {
+                return Uri.parse(status.extras.external_url);
+            }
+        }
+        if (USER_TYPE_FANFOU_COM.equals(status.account_key.getHost())) {
+            return getFanfouStatusLink(status.quoted_id);
+        }
+        return getTwitterStatusLink(status.quoted_user_screen_name, status.quoted_id);
+    }
+
+    @NonNull
+    public static Uri getUserWebLink(@NonNull ParcelableUser user) {
+        if (user.extras != null && user.extras.statusnet_profile_url != null) {
+            return Uri.parse(user.extras.statusnet_profile_url);
+        }
+        if (USER_TYPE_FANFOU_COM.equals(user.key.getHost())) {
+            return getFanfouUserLink(user.key.getId());
+        }
+        return getTwitterUserLink(user.screen_name);
+    }
+
+    @NonNull
+    static Uri getTwitterStatusLink(@NonNull String screenName, @NonNull String statusId) {
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme(SCHEME_HTTPS);
+        builder.authority(AUTHORITY_TWITTER);
+        builder.appendPath(screenName);
+        builder.appendPath("status");
+        builder.appendPath(statusId);
+        return builder.build();
+    }
+
+    static Uri getTwitterUserLink(String screenName) {
         Uri.Builder builder = new Uri.Builder();
         builder.scheme(SCHEME_HTTPS);
         builder.authority(AUTHORITY_TWITTER);
@@ -85,7 +131,20 @@ public class LinkCreator implements Constants {
         return builder.build();
     }
 
-    public static Uri getTwitterStatusLink(ParcelableStatus status) {
-        return getTwitterStatusLink(status.user_screen_name, status.id);
+    static Uri getFanfouStatusLink(String id) {
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme(SCHEME_HTTP);
+        builder.authority(AUTHORITY_FANFOU);
+        builder.appendPath("statuses");
+        builder.appendPath(id);
+        return builder.build();
+    }
+
+    static Uri getFanfouUserLink(String id) {
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme(SCHEME_HTTP);
+        builder.authority(AUTHORITY_FANFOU);
+        builder.appendPath(id);
+        return builder.build();
     }
 }

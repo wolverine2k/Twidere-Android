@@ -21,7 +21,6 @@ package org.mariotaku.twidere.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.os.Bundle;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,7 +32,9 @@ import org.mariotaku.twidere.adapter.iface.IDirectMessagesAdapter;
 import org.mariotaku.twidere.model.ParcelableDirectMessage;
 import org.mariotaku.twidere.model.ParcelableDirectMessageCursorIndices;
 import org.mariotaku.twidere.model.ParcelableMedia;
+import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.util.DirectMessageOnLinkClickHandler;
+import org.mariotaku.twidere.util.IntentUtils;
 import org.mariotaku.twidere.util.MediaLoadingHandler;
 import org.mariotaku.twidere.util.ThemeUtils;
 import org.mariotaku.twidere.util.TwidereLinkify;
@@ -45,8 +46,8 @@ import org.mariotaku.twidere.view.holder.MessageViewHolder;
 
 import java.lang.ref.WeakReference;
 
-public class MessageConversationAdapter extends BaseRecyclerViewAdapter<ViewHolder> implements Constants,
-        IDirectMessagesAdapter {
+public class MessageConversationAdapter extends BaseRecyclerViewAdapter<ViewHolder> implements
+        Constants, IDirectMessagesAdapter {
 
     private static final int ITEM_VIEW_TYPE_MESSAGE_OUTGOING = 1;
     private static final int ITEM_VIEW_TYPE_MESSAGE_INCOMING = 2;
@@ -70,11 +71,11 @@ public class MessageConversationAdapter extends BaseRecyclerViewAdapter<ViewHold
     public MessageConversationAdapter(final Context context) {
         super(context);
         mInflater = LayoutInflater.from(context);
-        mLinkify = new TwidereLinkify(new DirectMessageOnLinkClickHandler(context, null));
-        mTextSize = mPreferences.getInt(KEY_TEXT_SIZE, context.getResources().getInteger(R.integer.default_text_size));
-        mDisplayProfileImage = mPreferences.getBoolean(KEY_DISPLAY_PROFILE_IMAGE, true);
-        mProfileImageStyle = Utils.getProfileImageStyle(mPreferences.getString(KEY_PROFILE_IMAGE_STYLE, null));
-        mMediaPreviewStyle = Utils.getMediaPreviewStyle(mPreferences.getString(KEY_MEDIA_PREVIEW_STYLE, null));
+        mLinkify = new TwidereLinkify(new DirectMessageOnLinkClickHandler(context, null, preferences));
+        mTextSize = preferences.getInt(KEY_TEXT_SIZE, context.getResources().getInteger(R.integer.default_text_size));
+        mDisplayProfileImage = preferences.getBoolean(KEY_DISPLAY_PROFILE_IMAGE, true);
+        mProfileImageStyle = Utils.getProfileImageStyle(preferences.getString(KEY_PROFILE_IMAGE_STYLE, null));
+        mMediaPreviewStyle = Utils.getMediaPreviewStyle(preferences.getString(KEY_MEDIA_PREVIEW_STYLE, null));
         mMediaLoadingHandler = new MediaLoadingHandler(R.id.media_preview_progress);
         mIncomingMessageColor = ThemeUtils.getUserAccentColor(context);
         mOutgoingMessageColor = ThemeUtils.getCardBackgroundColor(context,
@@ -113,7 +114,7 @@ public class MessageConversationAdapter extends BaseRecyclerViewAdapter<ViewHold
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        switch (getItemViewType(position)) {
+        switch (holder.getItemViewType()) {
             case ITEM_VIEW_TYPE_MESSAGE_INCOMING:
             case ITEM_VIEW_TYPE_MESSAGE_OUTGOING: {
                 final Cursor c = mCursor;
@@ -159,7 +160,7 @@ public class MessageConversationAdapter extends BaseRecyclerViewAdapter<ViewHold
     }
 
     @Override
-    public boolean isProfileImageEnabled() {
+    public boolean getProfileImageEnabled() {
         return mDisplayProfileImage;
     }
 
@@ -167,9 +168,9 @@ public class MessageConversationAdapter extends BaseRecyclerViewAdapter<ViewHold
         final Cursor c = mCursor;
         if (c == null || c.isClosed()) return null;
         c.moveToPosition(position);
-        final long account_id = c.getLong(mIndices.account_id);
-        final long message_id = c.getLong(mIndices.id);
-        return Utils.findDirectMessageInDatabases(getContext(), account_id, message_id);
+        final UserKey accountKey = UserKey.valueOf(c.getString(mIndices.account_key));
+        final long messageId = c.getLong(mIndices.id);
+        return Utils.findDirectMessageInDatabases(getContext(), accountKey, messageId);
     }
 
     @Override
@@ -205,11 +206,10 @@ public class MessageConversationAdapter extends BaseRecyclerViewAdapter<ViewHold
         }
 
         @Override
-        public void onMediaClick(View view, ParcelableMedia media, long accountId, long extraId) {
+        public void onMediaClick(View view, ParcelableMedia media, UserKey accountKey, long extraId) {
             final MessageConversationAdapter adapter = adapterRef.get();
-            final Bundle options = Utils.createMediaViewerActivityOption(view);
-            Utils.openMedia(adapter.getContext(), adapter.getDirectMessage((int) extraId), media,
-                    options);
+            IntentUtils.openMedia(adapter.getContext(), adapter.getDirectMessage((int) extraId), media,
+                    null, adapter.preferences.getBoolean(KEY_NEW_DOCUMENT_API));
         }
 
     }

@@ -5,26 +5,32 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
-import android.preference.CheckBoxPreference;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.v7.preference.SwitchPreferenceCompat;
 import android.util.AttributeSet;
 
-public class ComponentStatePreference extends CheckBoxPreference {
+
+public class ComponentStatePreference extends SwitchPreferenceCompat {
 
     private final PackageManager mPackageManager;
     private final ComponentName mComponentName;
 
-    public ComponentStatePreference(final Context context) {
-        this(context, null);
+    public ComponentStatePreference(Context context) {
+        super(context);
+        mPackageManager = context.getPackageManager();
+        mComponentName = getComponentName(context, null);
+        setDefaultValue(isComponentEnabled());
     }
 
-    public ComponentStatePreference(final Context context, final AttributeSet attrs) {
-        this(context, attrs, android.R.attr.checkBoxPreferenceStyle);
+    public ComponentStatePreference(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        mPackageManager = context.getPackageManager();
+        mComponentName = getComponentName(context, attrs);
+        setDefaultValue(isComponentEnabled());
     }
 
-    public ComponentStatePreference(final Context context, final AttributeSet attrs, final int defStyle) {
-        super(context, attrs, defStyle);
+    public ComponentStatePreference(Context context, AttributeSet attrs) {
+        super(context, attrs);
         mPackageManager = context.getPackageManager();
         mComponentName = getComponentName(context, attrs);
         setDefaultValue(isComponentEnabled());
@@ -32,18 +38,16 @@ public class ComponentStatePreference extends CheckBoxPreference {
 
     @Override
     public boolean shouldDisableDependents() {
-        final boolean disableDependentsState = getDisableDependentsState();
-        final boolean value = isComponentEnabled();
-        return disableDependentsState ? value : !value;
+        return getDisableDependentsState() || !isComponentAvailable();
     }
 
     @Override
-    protected Object onGetDefaultValue(@NonNull final TypedArray a, final int index) {
+    protected final Boolean onGetDefaultValue(@NonNull final TypedArray a, final int index) {
         return isComponentEnabled();
     }
 
     @Override
-    protected void onSetInitialValue(final boolean restoreValue, final Object defaultValue) {
+    protected final void onSetInitialValue(final boolean restoreValue, final Object defaultValue) {
         setChecked(getPersistedBoolean(true));
     }
 
@@ -62,18 +66,6 @@ public class ComponentStatePreference extends CheckBoxPreference {
     @Override
     protected boolean shouldPersist() {
         return true;
-    }
-
-    @Override
-    protected void notifyHierarchyChanged() {
-        super.notifyHierarchyChanged();
-        updateEnableState();
-    }
-
-    @Override
-    protected void onAttachedToHierarchy(@NonNull final PreferenceManager preferenceManager) {
-        super.onAttachedToHierarchy(preferenceManager);
-        updateEnableState();
     }
 
     @Override
@@ -102,8 +94,5 @@ public class ComponentStatePreference extends CheckBoxPreference {
         }
     }
 
-    private void updateEnableState() {
-        setEnabled(isComponentAvailable());
-    }
 
 }

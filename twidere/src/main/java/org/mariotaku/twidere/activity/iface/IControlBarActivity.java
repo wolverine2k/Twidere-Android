@@ -11,6 +11,9 @@ import android.view.animation.DecelerateInterpolator;
  */
 public interface IControlBarActivity {
 
+    /**
+     * @param offset 0: invisible, 1: visible
+     */
     void setControlBarOffset(float offset);
 
     void setControlBarVisibleAnimate(boolean visible);
@@ -33,13 +36,14 @@ public interface IControlBarActivity {
 
     final class ControlBarShowHideHelper {
 
-        private static final long DURATION = 200l;
+        private static final long DURATION = 200L;
 
-        private final IControlBarActivity mActivity;
-        private int mControlAnimationDirection;
+        private final IControlBarActivity activity;
+        private int controlAnimationDirection;
+        private ObjectAnimator currentControlAnimation;
 
         public ControlBarShowHideHelper(IControlBarActivity activity) {
-            mActivity = activity;
+            this.activity = activity;
         }
 
         private static class ControlBarOffsetProperty extends Property<IControlBarActivity, Float> {
@@ -69,15 +73,21 @@ public interface IControlBarActivity {
         }
 
         public void setControlBarVisibleAnimate(final boolean visible, final ControlBarAnimationListener listener) {
-            if (mControlAnimationDirection != 0) return;
+            final int newDirection = visible ? 1 : -1;
+            if (controlAnimationDirection == newDirection) return;
+            if (currentControlAnimation != null && controlAnimationDirection != 0) {
+                currentControlAnimation.cancel();
+                currentControlAnimation = null;
+                controlAnimationDirection = newDirection;
+            }
             final ObjectAnimator animator;
-            final float offset = mActivity.getControlBarOffset();
+            final float offset = activity.getControlBarOffset();
             if (visible) {
                 if (offset >= 1) return;
-                animator = ObjectAnimator.ofFloat(mActivity, ControlBarOffsetProperty.SINGLETON, offset, 1);
+                animator = ObjectAnimator.ofFloat(activity, ControlBarOffsetProperty.SINGLETON, offset, 1);
             } else {
                 if (offset <= 0) return;
-                animator = ObjectAnimator.ofFloat(mActivity, ControlBarOffsetProperty.SINGLETON, offset, 0);
+                animator = ObjectAnimator.ofFloat(activity, ControlBarOffsetProperty.SINGLETON, offset, 0);
             }
             animator.setInterpolator(new DecelerateInterpolator());
             animator.addListener(new AnimatorListener() {
@@ -87,7 +97,8 @@ public interface IControlBarActivity {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    mControlAnimationDirection = 0;
+                    controlAnimationDirection = 0;
+                    currentControlAnimation = null;
                     if (listener != null) {
                         listener.onControlBarVisibleAnimationFinish(visible);
                     }
@@ -95,7 +106,8 @@ public interface IControlBarActivity {
 
                 @Override
                 public void onAnimationCancel(Animator animation) {
-                    mControlAnimationDirection = 0;
+                    controlAnimationDirection = 0;
+                    currentControlAnimation = null;
                 }
 
                 @Override
@@ -105,7 +117,8 @@ public interface IControlBarActivity {
             });
             animator.setDuration(DURATION);
             animator.start();
-            mControlAnimationDirection = visible ? 1 : -1;
+            currentControlAnimation = animator;
+            controlAnimationDirection = newDirection;
         }
     }
 }

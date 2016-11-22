@@ -21,13 +21,10 @@ package org.mariotaku.twidere.util.content;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.text.TextUtils;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.mariotaku.sqliteqb.library.Columns;
-import org.mariotaku.sqliteqb.library.Columns.Column;
 import org.mariotaku.sqliteqb.library.Constraint;
-import org.mariotaku.sqliteqb.library.Expression;
 import org.mariotaku.sqliteqb.library.NewColumn;
 import org.mariotaku.sqliteqb.library.OnConflict;
 import org.mariotaku.sqliteqb.library.Tables;
@@ -36,8 +33,6 @@ import org.mariotaku.sqliteqb.library.query.SQLSelectQuery;
 import org.mariotaku.twidere.util.TwidereArrayUtils;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,6 +44,9 @@ import static org.mariotaku.sqliteqb.library.SQLQueryBuilder.insertInto;
 import static org.mariotaku.sqliteqb.library.SQLQueryBuilder.select;
 
 public final class DatabaseUpgradeHelper {
+
+    private DatabaseUpgradeHelper() {
+    }
 
     public static void safeUpgrade(final SQLiteDatabase db, final String table, final String[] newColNames,
                                    final String[] newColTypes, final boolean dropDirectly,
@@ -136,20 +134,6 @@ public final class DatabaseUpgradeHelper {
         }
     }
 
-    private static String getCreateSQL(final SQLiteDatabase db, final String table) {
-        final SQLSelectQuery.Builder qb = select(new Column("sql"));
-        qb.from(new Tables("sqlite_master"));
-        qb.where(new Expression("type = ? AND name = ?"));
-        final Cursor c = db.rawQuery(qb.buildSQL(), new String[]{"table", table});
-        if (c == null) return null;
-        try {
-            if (c.moveToFirst()) return c.getString(0);
-            return null;
-        } finally {
-            c.close();
-        }
-    }
-
     private static String[] getNotNullColumns(final NewColumn[] newCols) {
         if (newCols == null) return null;
         final String[] notNullCols = new String[newCols.length];
@@ -160,19 +144,6 @@ public final class DatabaseUpgradeHelper {
             }
         }
         return ArrayUtils.subarray(notNullCols, 0, count);
-    }
-
-    private static Map<String, String> getTypeMapByCreateQuery(final String query) {
-        if (TextUtils.isEmpty(query)) return Collections.emptyMap();
-        final int start = query.indexOf("("), end = query.lastIndexOf(")");
-        if (start < 0 || end < 0) return Collections.emptyMap();
-        final HashMap<String, String> map = new HashMap<>();
-        for (final String segment : query.substring(start + 1, end).split(",")) {
-            final String trimmed = segment.trim().replaceAll(" +", " ");
-            final int idx = trimmed.indexOf(" ");
-            map.put(trimmed.substring(0, idx), trimmed.substring(idx + 1, trimmed.length()));
-        }
-        return map;
     }
 
 }

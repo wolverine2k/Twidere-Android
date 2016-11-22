@@ -20,16 +20,17 @@
 package org.mariotaku.twidere.util;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 
-import org.mariotaku.twidere.fragment.support.OpenStreetMapViewerFragment;
+import org.mariotaku.twidere.fragment.OpenStreetMapViewerFragment;
 
 /**
  * Created by mariotaku on 15/4/27.
  */
 public class MapFragmentFactoryImpl extends MapFragmentFactory {
     @Override
-    public Fragment createMapFragment(Context context) {
+    public Fragment createMapFragment(@NonNull Context context) {
         return new OpenStreetMapViewerFragment();
     }
 }

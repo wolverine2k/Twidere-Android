@@ -19,6 +19,7 @@
 
 package org.mariotaku.twidere.nyan;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -28,6 +29,7 @@ import android.service.dreams.DreamService;
 import android.view.View;
 import android.view.View.OnSystemUiVisibilityChangeListener;
 
+@SuppressLint("Registered")
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class NyanDaydreamService extends DreamService implements NyanConstants,
         OnSharedPreferenceChangeListener, OnSystemUiVisibilityChangeListener {
@@ -60,7 +62,7 @@ public class NyanDaydreamService extends DreamService implements NyanConstants,
     }
 
     @Override
-    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
+    public void onSharedPreferenceChanged(final SharedPreferences preferences, final String key) {
         if (KEY_LIVE_WALLPAPER_SCALE.equals(key)) {
             updateView();
         }

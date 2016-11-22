@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--suppress AndroidElementNotAllowed -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:title="@string/network">
+    android:title="@string/advanced">
 
     <PreferenceCategory
         android:key="category_connectivity"
         android:title="@string/connectivity">
 
-        <org.mariotaku.twidere.preference.AutoFixSwitchPreference
+        <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="builtin_dns_resolver"
             android:title="@string/builtin_dns_resolver"/>
 
-        <org.mariotaku.twidere.preference.AutoFixCheckBoxPreference
+        <SwitchPreferenceCompat
             android:defaultValue="false"
             android:dependency="builtin_dns_resolver"
             android:key="tcp_dns_query"
             android:summary="@string/tcp_dns_query_summary"
             android:title="@string/tcp_dns_query"/>
 
-        <org.mariotaku.twidere.preference.SummaryEditTextPreference
+        <org.mariotaku.twidere.preference.ThemedEditTextPreference
             android:dependency="builtin_dns_resolver"
             android:dialogTitle="@string/dns_server"
             android:inputType="textVisiblePassword"
@@ -33,42 +34,43 @@
             android:key="custom_host_mapping"
             android:summary="@string/custom_host_mapping_summary"
             android:title="@string/custom_host_mapping"/>
+
     </PreferenceCategory>
     <PreferenceCategory
         android:key="category_proxy"
         android:title="@string/proxy">
-        <org.mariotaku.twidere.preference.AutoFixCheckBoxPreference
+        <SwitchPreferenceCompat
             android:defaultValue="false"
             android:disableDependentsState="false"
             android:key="enable_proxy"
             android:summary="@string/proxy_summary"
             android:title="@string/proxy"/>
 
-        <org.mariotaku.twidere.preference.SummaryListPreference
+        <org.mariotaku.twidere.preference.EntrySummaryListPreference
             android:defaultValue="http"
             android:dependency="enable_proxy"
             android:entries="@array/entries_proxy_type"
             android:entryValues="@array/values_proxy_type"
             android:key="proxy_type"
             android:title="@string/proxy_type"/>
-        <org.mariotaku.twidere.preference.SummaryEditTextPreference
+        <org.mariotaku.twidere.preference.ThemedEditTextPreference
             android:dependency="enable_proxy"
             android:key="proxy_host"
             android:singleLine="true"
             android:title="@string/proxy_host"/>
-        <org.mariotaku.twidere.preference.SummaryEditTextPreference
+        <org.mariotaku.twidere.preference.ThemedEditTextPreference
             android:dependency="enable_proxy"
             android:inputType="number"
             android:key="proxy_port"
             android:singleLine="true"
             android:title="@string/proxy_port"/>
-        <org.mariotaku.twidere.preference.SummaryEditTextPreference
+        <org.mariotaku.twidere.preference.ThemedEditTextPreference
             android:dependency="enable_proxy"
             android:inputType="textEmailAddress"
             android:key="proxy_username"
             android:singleLine="true"
             android:title="@string/proxy_username"/>
-        <org.mariotaku.twidere.preference.AutoFixEditTextPreference
+        <org.mariotaku.twidere.preference.ThemedEditTextPreference
             android:dependency="enable_proxy"
             android:inputType="textPassword"
             android:key="proxy_password"
@@ -80,6 +82,7 @@
         android:title="@string/api">
 
         <org.mariotaku.twidere.preference.DefaultAPIPreference
+            android:key="default_api"
             android:summary="@string/default_api_settings_summary"
             android:title="@string/default_api_settings"/>
 
@@ -89,18 +92,18 @@
         android:key="category_tumbor"
         android:title="@string/thumbor_integration">
 
-        <org.mariotaku.twidere.preference.AutoFixCheckBoxPreference
+        <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="thumbor_enabled"
             android:title="@string/thumbor_integration"/>
 
-        <org.mariotaku.twidere.preference.SummaryEditTextPreference
+        <org.mariotaku.twidere.preference.ThemedEditTextPreference
             android:dependency="thumbor_enabled"
             android:inputType="textUri"
             android:key="thumbor_address"
             android:title="@string/server_address"/>
 
-        <org.mariotaku.twidere.preference.AutoFixEditTextPreference
+        <org.mariotaku.twidere.preference.ThemedEditTextPreference
             android:dependency="thumbor_enabled"
             android:inputType="textVisiblePassword"
             android:key="thumbor_security_key"

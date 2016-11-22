@@ -51,7 +51,6 @@ public class TabPagerIndicator extends RecyclerView implements PagerIndicator, C
 
     private OnPageChangeListener mPageChangeListener;
     private int mOption;
-    private boolean mTabExpandEnabled;
     private int mHorizontalPadding, mVerticalPadding;
     private int mColumns;
 
@@ -65,7 +64,7 @@ public class TabPagerIndicator extends RecyclerView implements PagerIndicator, C
         ViewCompat.setOverScrollMode(this, ViewCompat.OVER_SCROLL_NEVER);
         setHorizontalScrollBarEnabled(false);
         setVerticalScrollBarEnabled(false);
-        setLayoutManager(mLayoutManager = new TabLayoutManager(this));
+        setLayoutManager(mLayoutManager = new TabLayoutManager(context, this));
         setItemContext(context);
         setAdapter(mIndicatorAdapter);
         final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TabPagerIndicator);
@@ -219,7 +218,7 @@ public class TabPagerIndicator extends RecyclerView implements PagerIndicator, C
         }
         mViewPager = view;
         mPagerProvider = adapter;
-        view.setOnPageChangeListener(this);
+        view.addOnPageChangeListener(this);
         mIndicatorAdapter.setTabProvider((TabProvider) adapter);
     }
 
@@ -240,11 +239,11 @@ public class TabPagerIndicator extends RecyclerView implements PagerIndicator, C
     }
 
     private boolean isTabExpandEnabled() {
-        return mTabExpandEnabled;
+        return mLayoutManager.isTabExpandEnabled();
     }
 
     public void setTabExpandEnabled(boolean expandEnabled) {
-        mTabExpandEnabled = expandEnabled;
+        mLayoutManager.setTabExpandEnabled(expandEnabled);
     }
 
     private void setHorizontalPadding(int padding) {
@@ -489,24 +488,27 @@ public class TabPagerIndicator extends RecyclerView implements PagerIndicator, C
 
     private static class TabLayoutManager extends FixedLinearLayoutManager {
 
-        private final TabPagerIndicator mIndicator;
+        private boolean mTabExpandEnabled;
+        private final RecyclerView mRecyclerView;
 
-        public TabLayoutManager(TabPagerIndicator indicator) {
-            super(indicator.getContext(), HORIZONTAL, false);
-            mIndicator = indicator;
+        public TabLayoutManager(Context context, RecyclerView recyclerView) {
+            super(context, HORIZONTAL, false);
+            mRecyclerView = recyclerView;
+            setAutoMeasureEnabled(true);
         }
 
         @Override
         public void measureChildWithMargins(View child, int widthUsed, int heightUsed) {
             // first get default measured size
             super.measureChildWithMargins(child, widthUsed, heightUsed);
-            if (!mIndicator.isTabExpandEnabled()) return;
-            final int count = mIndicator.getCount();
+            if (!isTabExpandEnabled()) return;
+            final int count = getItemCount();
             if (count == 0) return;
-            final int parentHeight = mIndicator.getHeight(), parentWidth = mIndicator.getWidth();
+            final int parentHeight = mRecyclerView.getHeight(), parentWidth = mRecyclerView.getWidth();
             final int decoratedWidth = getDecoratedMeasuredWidth(child);
-            final int decoratorWidth = decoratedWidth - child.getMeasuredWidth();
-            final int width = Math.max(parentWidth / count - decoratorWidth, decoratedWidth);
+            final int measuredWidth = child.getMeasuredWidth();
+            final int decoratorWidth = decoratedWidth - measuredWidth;
+            final int width = Math.max(measuredWidth, parentWidth / count - decoratorWidth);
             final int heightMeasureSpec = MeasureSpec.makeMeasureSpec(parentHeight, MeasureSpec.EXACTLY);
             final int widthMeasureSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
             child.measure(widthMeasureSpec, heightMeasureSpec);
@@ -516,11 +518,19 @@ public class TabPagerIndicator extends RecyclerView implements PagerIndicator, C
         protected boolean isLayoutRTL() {
             return false;
         }
+
+        public boolean isTabExpandEnabled() {
+            return mTabExpandEnabled;
+        }
+
+        public void setTabExpandEnabled(boolean tabExpandEnabled) {
+            mTabExpandEnabled = tabExpandEnabled;
+        }
     }
 
     public void updateAppearance() {
         final int positionStart = mLayoutManager.findFirstVisibleItemPosition();
-        final int itemCount = mLayoutManager.findLastVisibleItemPosition() - positionStart;
+        final int itemCount = mLayoutManager.findLastVisibleItemPosition() - positionStart + 1;
         mIndicatorAdapter.notifyItemRangeChanged(positionStart, itemCount);
     }
 
@@ -590,27 +600,22 @@ public class TabPagerIndicator extends RecyclerView implements PagerIndicator, C
 
         public void setDisplayBadge(boolean display) {
             mDisplayBadge = display;
-//            notifyDataSetChanged();
         }
 
         public void setIconColor(int color) {
             mIconColor = color;
-//            notifyDataSetChanged();
         }
 
         public void setLabelColor(int color) {
             mLabelColor = color;
-            notifyDataSetChanged();
         }
 
         public void setStripColor(int color) {
             mStripColor = color;
-//            notifyDataSetChanged();
         }
 
         public void setTabProvider(TabProvider tabProvider) {
             mTabProvider = tabProvider;
-//            notifyDataSetChanged();
         }
     }
 

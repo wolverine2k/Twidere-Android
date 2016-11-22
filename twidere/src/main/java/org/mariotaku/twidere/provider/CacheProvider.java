@@ -9,18 +9,25 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringDef;
 import android.webkit.MimeTypeMap;
 
-import com.j256.simplemagic.ContentInfoUtil;
+import com.bluelinelabs.logansquare.JsonMapper;
 import com.nostra13.universalimageloader.cache.disc.DiskCache;
 
+import org.mariotaku.commons.logansquare.LoganSquareMapperFinder;
+import org.mariotaku.restfu.RestFuUtils;
 import org.mariotaku.twidere.TwidereConstants;
+import org.mariotaku.twidere.model.CacheMetadata;
 import org.mariotaku.twidere.task.SaveFileTask;
+import org.mariotaku.twidere.util.BitmapUtils;
 import org.mariotaku.twidere.util.dagger.GeneralComponentHelper;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Locale;
 
 import javax.inject.Inject;
 
@@ -29,18 +36,22 @@ import okio.ByteString;
 /**
  * Created by mariotaku on 16/1/1.
  */
-public class CacheProvider extends ContentProvider {
+public class CacheProvider extends ContentProvider implements TwidereConstants {
     @Inject
     DiskCache mSimpleDiskCache;
-    private ContentInfoUtil mContentInfoUtil;
 
-    public static Uri getCacheUri(String key) {
-        return new Uri.Builder().scheme(ContentResolver.SCHEME_CONTENT)
-                .authority(TwidereConstants.AUTHORITY_TWIDERE_CACHE)
-                .appendPath(ByteString.encodeUtf8(key).base64Url())
-                .build();
+    public static Uri getCacheUri(String key, @Type String type) {
+        final Uri.Builder builder = new Uri.Builder();
+        builder.scheme(ContentResolver.SCHEME_CONTENT);
+        builder.authority(TwidereConstants.AUTHORITY_TWIDERE_CACHE);
+        builder.appendPath(ByteString.encodeUtf8(key).base64Url());
+        if (type != null) {
+            builder.appendQueryParameter(QUERY_PARAM_TYPE, type);
+        }
+        return builder.build();
     }
 
+    @NonNull
     public static String getCacheKey(Uri uri) {
         if (!ContentResolver.SCHEME_CONTENT.equals(uri.getScheme()))
             throw new IllegalArgumentException(uri.toString());
@@ -49,11 +60,23 @@ public class CacheProvider extends ContentProvider {
         return ByteString.decodeBase64(uri.getLastPathSegment()).utf8();
     }
 
+
+    public static String getMetadataKey(Uri uri) {
+        if (!ContentResolver.SCHEME_CONTENT.equals(uri.getScheme()))
+            throw new IllegalArgumentException(uri.toString());
+        if (!TwidereConstants.AUTHORITY_TWIDERE_CACHE.equals(uri.getAuthority()))
+            throw new IllegalArgumentException(uri.toString());
+        return getExtraKey(ByteString.decodeBase64(uri.getLastPathSegment()).utf8());
+    }
+
+    public static String getExtraKey(String key) {
+        return key + ".extra";
+    }
+
     @Override
     public boolean onCreate() {
         final Context context = getContext();
         assert context != null;
-        mContentInfoUtil = new ContentInfoUtil();
         GeneralComponentHelper.build(context).inject(this);
         return true;
     }
@@ -61,35 +84,64 @@ public class CacheProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Nullable
     @Override
     public String getType(@NonNull Uri uri) {
-        final File file = mSimpleDiskCache.get(getCacheKey(uri));
+        final CacheMetadata metadata = getMetadata(uri);
+        if (metadata != null) {
+            return metadata.getContentType();
+        }
+        final String type = uri.getQueryParameter(QUERY_PARAM_TYPE);
+        if (type != null) {
+            switch (type) {
+                case Type.IMAGE: {
+                    final File file = mSimpleDiskCache.get(getCacheKey(uri));
+                    if (file == null) return null;
+                    return BitmapUtils.getImageMimeType(file);
+                }
+                case Type.VIDEO: {
+                    return "video/mp4";
+                }
+                case Type.JSON: {
+                    return "application/json";
+                }
+            }
+        }
+        return null;
+    }
+
+    public CacheMetadata getMetadata(@NonNull Uri uri) {
+        final File file = mSimpleDiskCache.get(getMetadataKey(uri));
         if (file == null) return null;
+        FileInputStream is = null;
         try {
-            return mContentInfoUtil.findMatch(file).getMimeType();
+            final JsonMapper<CacheMetadata> mapper = LoganSquareMapperFinder.mapperFor(CacheMetadata.class);
+            is = new FileInputStream(file);
+            return mapper.parse(is);
         } catch (IOException e) {
             return null;
+        } finally {
+            RestFuUtils.closeSilently(is);
         }
     }
 
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, ContentValues values) {
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
     public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
-        throw new UnsupportedOperationException();
+        return 0;
     }
 
     @Override
     public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        throw new UnsupportedOperationException();
+        return 0;
     }
 
     @Nullable
@@ -137,27 +189,51 @@ public class CacheProvider extends ContentProvider {
 
     public static final class CacheFileTypeCallback implements SaveFileTask.FileInfoCallback {
         private final Context context;
+        private final String type;
 
-        public CacheFileTypeCallback(Context context) {
+        public CacheFileTypeCallback(Context context, @Type String type) {
             this.context = context;
+            this.type = type;
         }
 
-        @Nullable
         @Override
+        @NonNull
         public String getFilename(@NonNull Uri source) {
-            final String cacheKey = getCacheKey(source);
-            if (cacheKey == null) return null;
-            return cacheKey.replaceAll("[^\\w\\d_]", "_");
+            String cacheKey = getCacheKey(source);
+            final int indexOfSsp = cacheKey.indexOf("://");
+            if (indexOfSsp != -1) {
+                cacheKey = cacheKey.substring(indexOfSsp + 3);
+            }
+            return cacheKey.replaceAll("[^\\w\\d_]", String.valueOf(getSpecialCharacter()));
         }
 
         @Override
+        @Nullable
         public String getMimeType(@NonNull Uri source) {
-            return context.getContentResolver().getType(source);
+            if (type == null || source.getQueryParameter(QUERY_PARAM_TYPE) != null) {
+                return context.getContentResolver().getType(source);
+            }
+            final Uri.Builder builder = source.buildUpon();
+            builder.appendQueryParameter(QUERY_PARAM_TYPE, type);
+            return context.getContentResolver().getType(builder.build());
         }
 
         @Override
-        public String getExtension(String mimeType) {
-            return MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType);
+        public String getExtension(@Nullable String mimeType) {
+            if (mimeType == null) return null;
+            return MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType.toLowerCase(Locale.US));
         }
+
+        @Override
+        public char getSpecialCharacter() {
+            return '_';
+        }
+    }
+
+    @StringDef({Type.IMAGE, Type.VIDEO, Type.JSON})
+    public @interface Type {
+        String IMAGE = "image";
+        String VIDEO = "video";
+        String JSON = "json";
     }
 }

@@ -18,61 +18,42 @@
   ~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
+<!--suppress AndroidElementNotAllowed -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <org.mariotaku.twidere.preference.SummaryListPreference
-        android:defaultValue="@string/default_profile_image_style"
-        android:entries="@array/entries_profile_image_style"
-        android:entryValues="@array/values_profile_image_style"
-        android:key="profile_image_style"
-        android:title="@string/profile_image_style">
-        <extra
-            android:name="notify_change"
-            android:value="true"/>
-    </org.mariotaku.twidere.preference.SummaryListPreference>
-
-    <org.mariotaku.twidere.preference.SummaryListPreference
+    <org.mariotaku.twidere.preference.EntrySummaryListPreference
         android:defaultValue="crop"
         android:entries="@array/entries_media_preview_style"
         android:entryValues="@array/values_media_preview_style"
         android:key="media_preview_style"
         android:title="@string/media_preview_style">
         <extra
-            android:name="notify_change"
+            android:name="should_recreate"
             android:value="true"/>
-    </org.mariotaku.twidere.preference.SummaryListPreference>
-    <org.mariotaku.twidere.preference.AutoFixSwitchPreference
+    </org.mariotaku.twidere.preference.EntrySummaryListPreference>
+    <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="show_absolute_time"
         android:summary="@string/show_absolute_time_summary"
         android:title="@string/show_absolute_time">
         <extra
-            android:name="notify_change"
+            android:name="should_recreate"
             android:value="true"/>
-    </org.mariotaku.twidere.preference.AutoFixSwitchPreference>
-    <org.mariotaku.twidere.preference.AutoFixSwitchPreference
+    </SwitchPreferenceCompat>
+    <SwitchPreferenceCompat
         android:defaultValue="true"
         android:key="unread_count"
         android:title="@string/unread_count">
         <extra
-            android:name="notify_change"
+            android:name="should_recreate"
             android:value="true"/>
-    </org.mariotaku.twidere.preference.AutoFixSwitchPreference>
+    </SwitchPreferenceCompat>
 
-    <org.mariotaku.twidere.preference.SummaryListPreference
+    <org.mariotaku.twidere.preference.EntrySummaryListPreference
         android:defaultValue="@string/default_tab_display_option"
         android:entries="@array/entries_tab_display_option"
         android:entryValues="@array/values_tab_display_option"
         android:key="tab_display_option"
         android:title="@string/tab_display_option"/>
 
-    <org.mariotaku.twidere.preference.AutoFixSwitchPreference
-        android:defaultValue="false"
-        android:key="leftside_compose_button"
-        android:summary="@string/leftside_compose_button_summary"
-        android:title="@string/leftside_compose_button"/>
-    <org.mariotaku.twidere.preference.AutoFixSwitchPreference
-        android:defaultValue="false"
-        android:key="sort_timeline_by_id"
-        android:title="@string/sort_timeline_by_id"/>
 </PreferenceScreen>

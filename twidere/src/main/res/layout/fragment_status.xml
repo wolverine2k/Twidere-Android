@@ -22,19 +22,18 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:descendantFocusability="beforeDescendants"
+    android:fitsSystemWindows="true"
     android:orientation="vertical">
 
-
     <RelativeLayout
-        android:id="@+id/status_content"
+        android:id="@+id/statusContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:visibility="gone">
 
         <org.mariotaku.twidere.view.ExtendedRecyclerView
-            android:id="@+id/recycler_view"
+            android:id="@+id/recyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scrollbars="vertical">
@@ -46,7 +45,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"/>
-
 
     </RelativeLayout>
 

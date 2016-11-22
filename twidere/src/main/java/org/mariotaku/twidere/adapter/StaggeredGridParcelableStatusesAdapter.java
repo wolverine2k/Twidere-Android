@@ -32,18 +32,22 @@ import com.commonsware.cwac.layouts.AspectLockedFrameLayout;
 
 import org.mariotaku.twidere.R;
 import org.mariotaku.twidere.adapter.iface.IStatusesAdapter;
+import org.mariotaku.twidere.graphic.like.LikeAnimationDrawable;
 import org.mariotaku.twidere.model.ParcelableMedia;
 import org.mariotaku.twidere.model.ParcelableStatus;
+import org.mariotaku.twidere.model.UserKey;
+import org.mariotaku.twidere.model.util.ParcelableMediaUtils;
 import org.mariotaku.twidere.util.MediaLoaderWrapper;
+import org.mariotaku.twidere.view.MediaPreviewImageView;
 import org.mariotaku.twidere.view.holder.iface.IStatusViewHolder;
 
 /**
  * Created by mariotaku on 14/11/19.
  */
-public class StaggeredGridParcelableStatusesAdapter extends AbsParcelableStatusesAdapter {
+public class StaggeredGridParcelableStatusesAdapter extends ParcelableStatusesAdapter {
 
-    public StaggeredGridParcelableStatusesAdapter(Context context, boolean compact) {
-        super(context, compact);
+    public StaggeredGridParcelableStatusesAdapter(Context context) {
+        super(context);
     }
 
     @Override
@@ -53,7 +57,7 @@ public class StaggeredGridParcelableStatusesAdapter extends AbsParcelableStatuse
 
     @NonNull
     @Override
-    protected IStatusViewHolder onCreateStatusViewHolder(ViewGroup parent, boolean compact) {
+    protected IStatusViewHolder onCreateStatusViewHolder(ViewGroup parent) {
         final View view = getInflater().inflate(R.layout.adapter_item_media_status, parent, false);
         final MediaStatusViewHolder holder = new MediaStatusViewHolder(this, view);
         holder.setOnClickListeners();
@@ -66,7 +70,7 @@ public class StaggeredGridParcelableStatusesAdapter extends AbsParcelableStatuse
         private final SimpleAspectRatioSource aspectRatioSource = new SimpleAspectRatioSource();
 
         private final AspectLockedFrameLayout mediaImageContainer;
-        private final ImageView mediaImageView;
+        private final MediaPreviewImageView mediaImageView;
         private final ImageView mediaProfileImageView;
         private final TextView mediaTextView;
         private final IStatusesAdapter<?> adapter;
@@ -77,34 +81,31 @@ public class StaggeredGridParcelableStatusesAdapter extends AbsParcelableStatuse
             this.adapter = adapter;
             mediaImageContainer = (AspectLockedFrameLayout) itemView.findViewById(R.id.media_image_container);
             mediaImageContainer.setAspectRatioSource(aspectRatioSource);
-            mediaImageView = (ImageView) itemView.findViewById(R.id.media_image);
+            mediaImageView = (MediaPreviewImageView) itemView.findViewById(R.id.media_image);
             mediaProfileImageView = (ImageView) itemView.findViewById(R.id.media_profile_image);
             mediaTextView = (TextView) itemView.findViewById(R.id.media_text);
         }
 
 
         @Override
-        public void displayStatus(ParcelableStatus status, boolean displayInReplyTo) {
+        public void displayStatus(@NonNull ParcelableStatus status, boolean displayInReplyTo, boolean shouldDisplayExtraType) {
             final MediaLoaderWrapper loader = adapter.getMediaLoader();
             final ParcelableMedia[] media = status.media;
             if (media == null || media.length < 1) return;
             final ParcelableMedia firstMedia = media[0];
-            if (status.text_plain.codePointCount(0, status.text_plain.length()) == firstMedia.end) {
-                mediaTextView.setText(status.text_unescaped.substring(0, firstMedia.start));
+            mediaTextView.setText(status.text_unescaped);
+            if (firstMedia.width > 0 && firstMedia.height > 0) {
+                aspectRatioSource.setSize(firstMedia.width, firstMedia.height);
             } else {
-                mediaTextView.setText(status.text_unescaped);
+                aspectRatioSource.setSize(100, 100);
             }
-            aspectRatioSource.setSize(firstMedia.width, firstMedia.height);
             mediaImageContainer.setTag(firstMedia);
             mediaImageContainer.requestLayout();
-            loader.displayProfileImage(mediaProfileImageView, status.user_profile_image_url);
-            loader.displayPreviewImageWithCredentials(mediaImageView, firstMedia.preview_url,
-                    status.account_id, adapter.getMediaLoadingHandler());
-        }
 
-        @Override
-        public void displayStatus(@NonNull ParcelableStatus status, boolean displayInReplyTo, boolean shouldDisplayExtraType) {
-            displayStatus(status, displayInReplyTo);
+            mediaImageView.setHasPlayIcon(ParcelableMediaUtils.hasPlayIcon(firstMedia.type));
+            loader.displayProfileImage(mediaProfileImageView, status);
+            loader.displayPreviewImageWithCredentials(mediaImageView, firstMedia.preview_url,
+                    status.account_key, adapter.getMediaLoadingHandler());
         }
 
         @Override
@@ -123,7 +124,7 @@ public class StaggeredGridParcelableStatusesAdapter extends AbsParcelableStatuse
         public void onClick(View v) {
             if (listener == null) return;
             switch (v.getId()) {
-                case R.id.item_content: {
+                case R.id.itemContent: {
                     listener.onStatusClick(this, getLayoutPosition());
                     break;
                 }
@@ -135,17 +136,22 @@ public class StaggeredGridParcelableStatusesAdapter extends AbsParcelableStatuse
         }
 
         @Override
-        public void onMediaClick(View view, ParcelableMedia media, long accountId, long extraId) {
+        public void onMediaClick(View view, ParcelableMedia media, UserKey accountKey, long extraId) {
         }
 
         @Override
         public void setStatusClickListener(StatusClickListener listener) {
             this.listener = listener;
-            itemView.findViewById(R.id.item_content).setOnClickListener(this);
+            itemView.findViewById(R.id.itemContent).setOnClickListener(this);
         }
 
         @Override
         public void setTextSize(float textSize) {
+
+        }
+
+        @Override
+        public void playLikeAnimation(LikeAnimationDrawable.OnLikedListener listener) {
 
         }
 

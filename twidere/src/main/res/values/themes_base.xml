@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Twidere - Twitter client for Android
   ~
   ~  Copyright (C) 2012-2014 Mariotaku Lee <mariotaku.lee@gmail.com>
@@ -20,12 +19,6 @@
 
 <resources>
 
-    <style name="Theme.Base" parent="android:Theme.Holo"/>
-
-    <style name="Theme.Base.Dialog" parent="android:Theme.Holo.Dialog"/>
-
-    <style name="Theme.Base.Light" parent="android:Theme.Holo.Light"/>
-
-    <style name="Theme.Base.Light.Dialog" parent="android:Theme.Holo.Light.Dialog"/>
+    <style name="Theme.AppCompat.TranslucentDecor"/>
 
 </resources>

@@ -18,11 +18,10 @@
  */
 package org.mariotaku.twidere;
 
-import org.mariotaku.twidere.model.ParcelableStatusUpdate;
-import org.mariotaku.twidere.model.StatusShortenResult;
-
 interface IStatusShortener {
 	
-	StatusShortenResult shorten(in ParcelableStatusUpdate status, String overrideStatusText);
+	String shorten(String statusJson, String currentAccountId, String overrideStatusText);
+
+	boolean callback(String resultJson, String statusJson);
 	
 }

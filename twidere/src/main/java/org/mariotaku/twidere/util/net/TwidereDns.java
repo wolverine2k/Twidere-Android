@@ -27,7 +27,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.TimingLogger;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mariotaku.twidere.BuildConfig;
 import org.mariotaku.twidere.Constants;
@@ -45,7 +44,9 @@ import org.xbill.DNS.Type;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -54,7 +55,7 @@ import javax.inject.Singleton;
 import okhttp3.Dns;
 
 @Singleton
-public class TwidereDns implements Constants, Dns {
+public class TwidereDns implements Dns, Constants {
 
     private static final String RESOLVER_LOGTAG = "TwidereDns";
 
@@ -63,11 +64,10 @@ public class TwidereDns implements Constants, Dns {
     private final SystemHosts mSystemHosts;
 
     private Resolver mResolver;
-    private TimingLogger mLogger;
     private boolean mUseResolver;
 
     public TwidereDns(final Context context, SharedPreferencesWrapper preferences) {
-        mLogger = new TimingLogger(RESOLVER_LOGTAG, "resolve");
+
         mHostMapping = SharedPreferencesWrapper.getInstance(context, HOST_MAPPING_PREFERENCES_NAME, Context.MODE_PRIVATE);
         mSystemHosts = new SystemHosts();
         mPreferences = preferences;
@@ -75,94 +75,95 @@ public class TwidereDns implements Constants, Dns {
     }
 
     @Override
-    public synchronized List<InetAddress> lookup(String hostname) throws UnknownHostException {
+    public List<InetAddress> lookup(String hostname) throws UnknownHostException {
         try {
-            return Arrays.asList(resolveInternal(hostname, hostname, 0, mUseResolver));
+            return resolveInternal(hostname, hostname, 0, mUseResolver);
         } catch (IOException e) {
             if (e instanceof UnknownHostException) throw (UnknownHostException) e;
             throw new UnknownHostException("Unable to resolve address " + e.getMessage());
+        } catch (SecurityException e) {
+            throw new UnknownHostException("Security exception" + e.getMessage());
         }
     }
 
-    public synchronized List<InetAddress> lookupResolver(String hostname) throws UnknownHostException {
+    public List<InetAddress> lookupResolver(String hostname) throws UnknownHostException {
         try {
-            return Arrays.asList(resolveInternal(hostname, hostname, 0, true));
+            return resolveInternal(hostname, hostname, 0, true);
         } catch (IOException e) {
             if (e instanceof UnknownHostException) throw (UnknownHostException) e;
             throw new UnknownHostException("Unable to resolve address " + e.getMessage());
+        } catch (SecurityException e) {
+            throw new UnknownHostException("Security exception" + e.getMessage());
         }
     }
 
-    public synchronized void reloadDnsSettings() {
+    public void reloadDnsSettings() {
         mResolver = null;
         mUseResolver = mPreferences.getBoolean(KEY_BUILTIN_DNS_RESOLVER);
     }
 
     @NonNull
-    private InetAddress[] resolveInternal(final String originalHost, final String host, final int depth,
-                                          final boolean useResolver) throws IOException {
-        resetLog(originalHost);
+    private List<InetAddress> resolveInternal(final String originalHost, final String host, final int depth,
+                                              final boolean useResolver) throws IOException, SecurityException {
+        final TimingLogger logger = new TimingLogger(RESOLVER_LOGTAG, "resolve");
         // Return if host is an address
-        final InetAddress[] fromAddressString = fromAddressString(originalHost, host);
+        final List<InetAddress> fromAddressString = fromAddressString(originalHost, host);
         if (fromAddressString != null) {
             if (BuildConfig.DEBUG) {
-                addLogSplit(originalHost, host, "valid ip address", depth);
-                dumpLog(fromAddressString);
+                addLogSplit(logger, host, "valid ip address", depth);
+                dumpLog(logger, fromAddressString);
             }
             return fromAddressString;
         }
         // Load from custom mapping
-        addLogSplit(originalHost, host, "start custom mapping resolve", depth);
-        final InetAddress[] fromMapping = getFromMapping(host);
-        addLogSplit(originalHost, host, "end custom mapping resolve", depth);
+        addLogSplit(logger, host, "start custom mapping resolve", depth);
+        final List<InetAddress> fromMapping = getFromMapping(host);
+        addLogSplit(logger, host, "end custom mapping resolve", depth);
         if (fromMapping != null) {
             if (BuildConfig.DEBUG) {
-                dumpLog(fromMapping);
+                dumpLog(logger, fromMapping);
             }
             return fromMapping;
         }
         if (useResolver) {
             // Load from /etc/hosts, since Dnsjava doesn't support hosts entry lookup
-            addLogSplit(originalHost, host, "start /etc/hosts resolve", depth);
-            final InetAddress[] fromSystemHosts = fromSystemHosts(host);
-            addLogSplit(originalHost, host, "end /etc/hosts resolve", depth);
+            addLogSplit(logger, host, "start /etc/hosts resolve", depth);
+            final List<InetAddress> fromSystemHosts = fromSystemHosts(host);
+            addLogSplit(logger, host, "end /etc/hosts resolve", depth);
             if (fromSystemHosts != null) {
                 if (BuildConfig.DEBUG) {
-                    dumpLog(fromSystemHosts);
+                    dumpLog(logger, fromSystemHosts);
                 }
                 return fromSystemHosts;
             }
 
             // Use DNS resolver
-            addLogSplit(originalHost, host, "start resolver resolve", depth);
-            final InetAddress[] fromResolver = fromResolver(originalHost, host, depth);
-            addLogSplit(originalHost, host, "end resolver resolve", depth);
-            if (!ArrayUtils.isEmpty(fromResolver)) {
+            addLogSplit(logger, host, "start resolver resolve", depth);
+            final List<InetAddress> fromResolver = fromResolver(originalHost, host);
+            addLogSplit(logger, host, "end resolver resolve", depth);
+            if (fromResolver != null) {
                 if (BuildConfig.DEBUG) {
-                    dumpLog(fromResolver);
+                    dumpLog(logger, fromResolver);
                 }
                 return fromResolver;
             }
         }
-        addLogSplit(originalHost, host, "start system default resolve", depth);
-        final InetAddress[] fromDefault = InetAddress.getAllByName(host);
-        addLogSplit(originalHost, host, "end system default resolve", depth);
+        addLogSplit(logger, host, "start system default resolve", depth);
+        final List<InetAddress> fromDefault = Arrays.asList(InetAddress.getAllByName(host));
+        addLogSplit(logger, host, "end system default resolve", depth);
         if (BuildConfig.DEBUG) {
-            dumpLog(fromDefault);
+            dumpLog(logger, fromDefault);
         }
         return fromDefault;
     }
 
-    private void dumpLog(@NonNull InetAddress[] addresses) {
-        Log.v(RESOLVER_LOGTAG, "Resolved " + Arrays.toString(addresses));
-        mLogger.dumpToLog();
+    private void dumpLog(final TimingLogger logger, @NonNull List<InetAddress> addresses) {
+        Log.v(RESOLVER_LOGTAG, "Resolved " + addresses);
+        logger.dumpToLog();
     }
 
-    private void resetLog(String originalHost) {
-        mLogger.reset(RESOLVER_LOGTAG, originalHost);
-    }
 
-    private void addLogSplit(String originalHost, String host, String message, int depth) {
+    private void addLogSplit(final TimingLogger logger, String host, String message, int depth) {
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < depth; i++) {
             sb.append(">");
@@ -171,10 +172,10 @@ public class TwidereDns implements Constants, Dns {
         sb.append(host);
         sb.append(": ");
         sb.append(message);
-        mLogger.addSplit(sb.toString());
+        logger.addSplit(sb.toString());
     }
 
-    private InetAddress[] fromSystemHosts(String host) {
+    private List<InetAddress> fromSystemHosts(String host) {
         try {
             return mSystemHosts.resolve(host);
         } catch (IOException e) {
@@ -183,29 +184,24 @@ public class TwidereDns implements Constants, Dns {
     }
 
     @Nullable
-    private InetAddress[] fromResolver(String originalHost, String host, int depth) throws IOException {
-        addLogSplit(originalHost, host, "start get resolver", depth);
+    private List<InetAddress> fromResolver(String originalHost, String host) throws IOException {
         final Resolver resolver = getResolver();
-        addLogSplit(originalHost, host, "end get resolver", depth);
-        addLogSplit(originalHost, host, "start lookup host name", depth);
         final Record[] records = lookupHostName(resolver, host, true);
-        addLogSplit(originalHost, host, "end lookup host name", depth);
-        addLogSplit(originalHost, host, "start convert record", depth);
-        InetAddress[] addrs = new InetAddress[records.length];
-        for (int i = 0; i < records.length; i++) {
-            addrs[i] = addrFromRecord(originalHost, records[i]);
+        final List<InetAddress> addrs = new ArrayList<>(records.length);
+        for (Record record : records) {
+            addrs.add(addrFromRecord(originalHost, record));
         }
-        addLogSplit(originalHost, host, "end convert record", depth);
+        if (addrs.isEmpty()) return null;
         return addrs;
     }
 
     @Nullable
-    private InetAddress[] getFromMapping(final String host) throws UnknownHostException {
+    private List<InetAddress> getFromMapping(final String host) throws UnknownHostException {
         return getFromMappingInternal(host, host, false);
     }
 
     @Nullable
-    private InetAddress[] getFromMappingInternal(String host, String origHost, boolean checkRecursive) throws UnknownHostException {
+    private List<InetAddress> getFromMappingInternal(String host, String origHost, boolean checkRecursive) throws UnknownHostException {
         if (checkRecursive && hostMatches(host, origHost)) {
             // Recursive resolution, stop this call
             return null;
@@ -218,7 +214,7 @@ public class TwidereDns implements Constants, Dns {
                     // Maybe another hostname
                     return getFromMappingInternal(value, origHost, true);
                 }
-                return new InetAddress[]{resolved};
+                return Collections.singletonList(resolved);
             }
         }
         return null;
@@ -247,11 +243,12 @@ public class TwidereDns implements Constants, Dns {
     }
 
 
-    private InetAddress[] fromAddressString(String host, String address)
+    @Nullable
+    private List<InetAddress> fromAddressString(String host, String address)
             throws UnknownHostException {
         final InetAddress resolved = getResolvedIPAddress(host, address);
         if (resolved == null) return null;
-        return new InetAddress[]{resolved};
+        return Collections.singletonList(resolved);
     }
 
     public static InetAddress getResolvedIPAddress(@NonNull final String host,

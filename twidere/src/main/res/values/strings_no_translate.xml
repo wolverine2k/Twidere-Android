@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <string name="app_name" translatable="false">Twidere</string>
     <string name="theme_twidere">@string/app_name</string>
     <string name="nyan_sakamoto" translatable="false">Nyan Sakamoto!</string>
     <string name="kuma_union" translatable="false">熊孩子联盟</string>
@@ -14,5 +13,5 @@
     <string name="easter_egg_triggered_message" translatable="false">不二对你的膝盖发动了会心一击！</string>
     <string name="sample_status_text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam faucibus quis purus ac malesuada. Duis id vulputate magna, a eleifend amet.</string>
     <string name="unsupported_activity_action_title"><xliff:g id="action">%s</xliff:g> action</string>
-
+    <string name="fanfou_repost_format"><xliff:g id="text">%1$s</xliff:g> 转 \@<xliff:g id="screen_name">%2$s</xliff:g> <xliff:g id="orig_text">%3$s</xliff:g></string>
 </resources>

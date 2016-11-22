@@ -22,18 +22,24 @@ import org.mariotaku.restfu.http.HttpResponse;
 import org.mariotaku.restfu.http.MultiValueMap;
 import org.mariotaku.restfu.http.RestHttpClient;
 import org.mariotaku.restfu.http.mime.Body;
+import org.mariotaku.restfu.oauth.OAuthAuthorization;
+import org.mariotaku.restfu.oauth.OAuthEndpoint;
 import org.mariotaku.twidere.Constants;
-import org.mariotaku.twidere.api.twitter.auth.OAuthAuthorization;
-import org.mariotaku.twidere.api.twitter.auth.OAuthEndpoint;
-import org.mariotaku.twidere.model.ParcelableAccount;
+import org.mariotaku.twidere.model.CacheMetadata;
 import org.mariotaku.twidere.model.ParcelableCredentials;
 import org.mariotaku.twidere.model.ParcelableMedia;
+import org.mariotaku.twidere.model.UserKey;
+import org.mariotaku.twidere.model.util.ParcelableCredentialsUtils;
+import org.mariotaku.twidere.util.JsonSerializer;
+import org.mariotaku.twidere.util.MicroBlogAPIFactory;
 import org.mariotaku.twidere.util.SharedPreferencesWrapper;
-import org.mariotaku.twidere.util.TwitterAPIFactory;
 import org.mariotaku.twidere.util.UserAgentUtils;
 import org.mariotaku.twidere.util.media.preview.PreviewMediaExtractor;
+import org.mariotaku.twidere.util.net.NoIntercept;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Created by mariotaku on 16/1/28.
@@ -77,26 +83,50 @@ public class TwidereMediaDownloader implements MediaDownloader, Constants {
     @NonNull
     @Override
     public CacheDownloadLoader.DownloadResult get(@NonNull String url, Object extra) throws IOException {
-        final ParcelableMedia media = PreviewMediaExtractor.fromLink(url, mClient, extra);
-        return getInternal(media != null && media.media_url != null ? media.media_url : url, extra);
+        try {
+            boolean skipUrlReplacing = false;
+            if (extra instanceof MediaExtra) {
+                skipUrlReplacing = ((MediaExtra) extra).isSkipUrlReplacing();
+            }
+            if (!skipUrlReplacing) {
+                final ParcelableMedia media = PreviewMediaExtractor.fromLink(url, mClient, extra);
+                if (media != null && media.media_url != null) {
+                    return getInternal(media.media_url, extra);
+                }
+            }
+            return getInternal(url, extra);
+        } catch (IOException e) {
+            if (extra instanceof MediaExtra) {
+                final String fallbackUrl = ((MediaExtra) extra).getFallbackUrl();
+                if (fallbackUrl != null) {
+                    final ParcelableMedia media = PreviewMediaExtractor.fromLink(fallbackUrl,
+                            mClient, extra);
+                    if (media != null && media.media_url != null) {
+                        return getInternal(media.media_url, extra);
+                    } else {
+                        return getInternal(fallbackUrl, extra);
+                    }
+                }
+            }
+            throw e;
+        }
     }
 
     protected CacheDownloadLoader.DownloadResult getInternal(@NonNull String url,
                                                              @Nullable Object extra) throws IOException {
         final Uri uri = Uri.parse(url);
-        final Authorization auth;
-        final ParcelableCredentials account;
-        final boolean useThumbor;
+        Authorization auth = null;
+        ParcelableCredentials account = null;
+        boolean useThumbor = true;
         if (extra instanceof MediaExtra) {
             useThumbor = ((MediaExtra) extra).isUseThumbor();
-            account = ParcelableAccount.getCredentials(mContext, ((MediaExtra) extra).getAccountId());
-            auth = TwitterAPIFactory.getAuthorization(account);
-        } else {
-            useThumbor = true;
-            account = null;
-            auth = null;
+            UserKey accountKey = ((MediaExtra) extra).getAccountKey();
+            if (accountKey != null) {
+                account = ParcelableCredentialsUtils.getCredentials(mContext, accountKey);
+                auth = MicroBlogAPIFactory.getAuthorization(account);
+            }
         }
-        Uri modifiedUri = getReplacedUri(uri, account != null ? account.api_url_format : null);
+        final Uri modifiedUri = getReplacedUri(uri, account != null ? account.api_url_format : null);
         final MultiValueMap<String> additionalHeaders = new MultiValueMap<>();
         additionalHeaders.add("User-Agent", mUserAgent);
         final String method = GET.METHOD;
@@ -130,10 +160,20 @@ public class TwidereMediaDownloader implements MediaDownloader, Constants {
         builder.method(method);
         builder.url(requestUri);
         builder.headers(additionalHeaders);
+        builder.tag(NoIntercept.INSTANCE);
         final HttpResponse resp = mClient.newCall(builder.build()).execute();
-        if (!resp.isSuccessful()) throw new IOException("Unable to get media");
+        if (!resp.isSuccessful()) {
+            final String detailMessage = "Unable to get " + requestUri + ", response code: "
+                    + resp.getStatus();
+            if (resp.getStatus() == 404) {
+                throw new FileNotFoundException(detailMessage);
+            }
+            throw new IOException(detailMessage);
+        }
         final Body body = resp.getBody();
-        return new CacheDownloadLoader.DownloadResult(body.length(), body.stream());
+        final CacheMetadata metadata = new CacheMetadata();
+        metadata.setContentType(body.contentType().getContentType());
+        return new TwidereDownloadResult(body, metadata);
     }
 
     private String getEndpoint(Uri uri) {
@@ -169,7 +209,7 @@ public class TwidereMediaDownloader implements MediaDownloader, Constants {
             final String host = uri.getHost();
             final String domain = host.substring(0, host.lastIndexOf(".twitter.com"));
             final String path = uri.getPath();
-            sb.append(TwitterAPIFactory.getApiUrl(apiUrlFormat, domain, path));
+            sb.append(MicroBlogAPIFactory.getApiUrl(apiUrlFormat, domain, path));
             final String query = uri.getQuery();
             if (!TextUtils.isEmpty(query)) {
                 sb.append("?");
@@ -183,5 +223,39 @@ public class TwidereMediaDownloader implements MediaDownloader, Constants {
             return Uri.parse(sb.toString());
         }
         return uri;
+    }
+
+    private static class TwidereDownloadResult implements CacheDownloadLoader.DownloadResult {
+        private final Body mBody;
+        private final CacheMetadata mMetadata;
+
+        public TwidereDownloadResult(Body body, CacheMetadata metadata) {
+            mBody = body;
+            mMetadata = metadata;
+        }
+
+        @Override
+        public void close() throws IOException {
+            mBody.close();
+        }
+
+        @Override
+        public long getLength() throws IOException {
+            return mBody.length();
+        }
+
+        @NonNull
+        @Override
+        public InputStream getStream() throws IOException {
+            return mBody.stream();
+        }
+
+        @Override
+        public byte[] getExtra() {
+            if (mMetadata == null) return null;
+            final String serialize = JsonSerializer.serialize(mMetadata, CacheMetadata.class);
+            if (serialize == null) return null;
+            return serialize.getBytes();
+        }
     }
 }

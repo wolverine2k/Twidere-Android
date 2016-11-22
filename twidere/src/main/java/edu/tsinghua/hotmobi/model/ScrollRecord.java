@@ -24,15 +24,19 @@ import android.support.annotation.NonNull;
 import com.bluelinelabs.logansquare.annotation.JsonField;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
 
+import org.mariotaku.twidere.model.UserKey;
+
 /**
  * Created by mariotaku on 15/8/8.
  */
 @JsonObject
 public class ScrollRecord implements LogModel {
     @JsonField(name = "id")
-    long id;
+    String id;
     @JsonField(name = "account_id")
-    long accountId;
+    String accountId;
+    @JsonField(name = "account_host")
+    String accountHost;
     @JsonField(name = "timestamp")
     long timestamp;
     @JsonField(name = "time_offset")
@@ -40,25 +44,30 @@ public class ScrollRecord implements LogModel {
     @JsonField(name = "scroll_state")
     int scrollState;
 
-    public static ScrollRecord create(long id, long accountId, long timestamp, long timeOffset, int scrollState) {
+    public static ScrollRecord create(String id, UserKey accountKey, long timestamp, long timeOffset, int scrollState) {
         final ScrollRecord record = new ScrollRecord();
         record.setId(id);
-        record.setAccountId(accountId);
+        record.setAccountId(accountKey.getId());
+        record.setAccountHost(accountKey.getHost());
         record.setTimestamp(timestamp);
         record.setTimeOffset(timeOffset);
         record.setScrollState(scrollState);
         return record;
     }
 
-    public void setAccountId(long accountId) {
+    public void setAccountId(String accountId) {
         this.accountId = accountId;
+    }
+
+    public void setAccountHost(String accountHost) {
+        this.accountHost = accountHost;
     }
 
     public void setTimeOffset(long timeOffset) {
         this.timeOffset = timeOffset;
     }
 
-    public void setId(long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -74,7 +83,7 @@ public class ScrollRecord implements LogModel {
     public String toString() {
         return "ScrollRecord{" +
                 "id=" + id +
-                ", accountId=" + accountId +
+                ", mAccountKey=" + accountId +
                 ", timestamp=" + timestamp +
                 ", timeOffset=" + timeOffset +
                 ", scrollState=" + scrollState +

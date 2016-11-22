@@ -23,20 +23,22 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.IInterface;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
-import org.mariotaku.twidere.Constants;
+import org.mariotaku.twidere.TwidereConstants;
+import org.mariotaku.twidere.constant.IntentConstants;
 import org.mariotaku.twidere.util.ServiceUtils.ServiceToken;
 
-import static org.mariotaku.twidere.util.ServiceUtils.bindToService;
-import static org.mariotaku.twidere.util.ServiceUtils.unbindFromService;
-
-public abstract class AbsServiceInterface<I extends IInterface> implements Constants, IInterface {
+public abstract class AbsServiceInterface<I extends IInterface> implements IInterface {
 
     private final Context mContext;
     private final String mShortenerName;
+    @Nullable
+    private final Bundle mMetaData;
     private I mIInterface;
 
     private ServiceToken mToken;
@@ -56,9 +58,10 @@ public abstract class AbsServiceInterface<I extends IInterface> implements Const
 
     protected abstract I onServiceConnected(ComponentName service, IBinder obj);
 
-    protected AbsServiceInterface(final Context context, final String shortenerName) {
+    protected AbsServiceInterface(final Context context, final String componentName, @Nullable final Bundle metaData) {
         mContext = context;
-        mShortenerName = shortenerName;
+        mShortenerName = componentName;
+        mMetaData = metaData;
     }
 
     public final I getInterface() {
@@ -72,21 +75,32 @@ public abstract class AbsServiceInterface<I extends IInterface> implements Const
     }
 
     public final void unbindService() {
-        unbindFromService(mToken);
+        ServiceUtils.unbindFromService(mToken);
     }
 
     public final void waitForService() {
-        final Intent intent = new Intent(INTENT_ACTION_EXTENSION_SHORTEN_STATUS);
+        final Intent intent = new Intent(IntentConstants.INTENT_ACTION_EXTENSION_SHORTEN_STATUS);
         final ComponentName component = ComponentName.unflattenFromString(mShortenerName);
         intent.setComponent(component);
-        mToken = bindToService(mContext, intent, mConnection);
+        mToken = ServiceUtils.bindToService(mContext, intent, mConnection);
         while (mIInterface == null) {
             try {
                 Thread.sleep(100L);
             } catch (final InterruptedException e) {
-                Log.w(LOGTAG, e);
+                Log.w(TwidereConstants.LOGTAG, e);
             }
         }
     }
 
+    public final void checkService(CheckServiceAction action) throws CheckServiceException {
+        action.check(mMetaData);
+    }
+
+    public interface CheckServiceAction {
+        void check(@Nullable Bundle metaData) throws CheckServiceException;
+    }
+
+    public static class CheckServiceException extends Exception {
+
+    }
 }

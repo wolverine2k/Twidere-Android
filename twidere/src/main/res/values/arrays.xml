@@ -26,6 +26,7 @@
         <item>@string/mentions</item>
         <item>@string/inbox</item>
         <item>@string/trends</item>
+        <item>@string/saved_searches</item>
     </string-array>
     <string-array name="entries_image_preload_option">
         <item>@string/profile_images</item>
@@ -34,6 +35,7 @@
     <string-array name="entries_theme">
         <item>@string/theme_light</item>
         <item>@string/theme_dark</item>
+        <item>@string/theme_auto</item>
     </string-array>
     <string-array name="entries_theme_background">
         <item>@string/theme_background_default</item>
@@ -76,6 +78,9 @@
     <string-array name="entries_proxy_type">
         <item>HTTP</item>
         <!--<item>SOCKS</item>-->
+    </string-array>
+    <string-array name="entries_media_preload">
+        <item>Wi-Fi</item>
     </string-array>
 
 </resources>

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--suppress AndroidElementNotAllowed -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -15,7 +16,7 @@
             android:summary="@string/database_item_limit_summary"
             android:title="@string/database_item_limit"
             app:max="500"
-            app:min="50"
+            app:min="@integer/min_database_item_limit"
             app:step="10"/>
 
         <org.mariotaku.twidere.preference.SeekBarDialogPreference

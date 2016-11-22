@@ -116,18 +116,21 @@ public class HeaderDrawerLayout extends ViewGroup {
         for (int i = 0, j = getChildCount(); i < j; i++) {
             final View child = getChildAt(i);
             final int left = getPaddingLeft(), right = left + child.getMeasuredWidth();
-            final int top;
+            final int top, bottom;
             if (i == 0) {
                 if (shouldLayoutHeaderBottomCallback() && child.getHeight() != 0) {
-                    final int heightDelta = child.getMeasuredHeight() - child.getHeight();
-                    top = mHeaderOffset + getPaddingTop() - heightDelta;
+                    // How far did we moved?
+                    int delta = mHeaderOffset + getPaddingTop() - child.getTop();
+                    bottom = child.getBottom() + delta;
+                    top = bottom - child.getHeight();
                 } else {
                     top = mHeaderOffset + getPaddingTop();
+                    bottom = top + child.getMeasuredHeight();
                 }
             } else {
                 top = getChildAt(i - 1).getBottom();
+                bottom = top + child.getMeasuredHeight();
             }
-            final int bottom = top + child.getMeasuredHeight();
             child.layout(left, top, right, bottom);
             notifyOffsetChanged();
         }
@@ -361,7 +364,7 @@ public class HeaderDrawerLayout extends ViewGroup {
         }
 
         @Override
-        public void onViewReleased(View releasedChild, float xvel, float yvel) {
+        public void onViewReleased(View releasedChild, float xVel, float yVel) {
             mDrawer.mDragHelper.flingCapturedView(mDrawer.getPaddingLeft(),
                     mDrawer.getHeaderTopMinimum(), mDrawer.getPaddingLeft(),
                     mDrawer.getHeaderTopMaximum());

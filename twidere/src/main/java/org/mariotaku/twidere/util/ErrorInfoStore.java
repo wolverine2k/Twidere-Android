@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import org.mariotaku.twidere.R;
+import org.mariotaku.twidere.model.UserKey;
 
 
 /**
@@ -33,16 +34,34 @@ public class ErrorInfoStore {
         return mPreferences.getInt(key, 0);
     }
 
-    public int get(String key, long extraId) {
+    public int get(String key, String extraId) {
         return get(key + "_" + extraId);
+    }
+
+    public int get(String key, UserKey extraId) {
+        final String host = extraId.getHost();
+        if (host == null) {
+            return get(key, extraId.getId());
+        } else {
+            return get(key + "_" + extraId.getId() + "_" + host);
+        }
     }
 
     public void put(String key, int code) {
         mPreferences.edit().putInt(key, code).apply();
     }
 
-    public void put(String key, long extraId, int code) {
+    public void put(String key, String extraId, int code) {
         put(key + "_" + extraId, code);
+    }
+
+    public void put(String key, UserKey extraId, int code) {
+        final String host = extraId.getHost();
+        if (host == null) {
+            put(key, extraId.getId(), code);
+        } else {
+            put(key + "_" + extraId.getId() + "_" + host, code);
+        }
     }
 
     @Nullable
@@ -64,8 +83,17 @@ public class ErrorInfoStore {
         return null;
     }
 
-    public void remove(String key, long extraId) {
+    public void remove(String key, String extraId) {
         remove(key + "_" + extraId);
+    }
+
+    public void remove(String key, UserKey extraId) {
+        final String host = extraId.getHost();
+        if (host == null) {
+            remove(key, extraId.getId());
+        } else {
+            remove(key + "_" + extraId.getId() + "_" + host);
+        }
     }
 
     public void remove(String key) {

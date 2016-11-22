@@ -18,7 +18,6 @@
   -->
 
 <LinearLayout
-    android:id="@+id/compose_activity"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -28,84 +27,128 @@
     android:orientation="vertical">
 
     <RelativeLayout
-        android:id="@+id/compose_content"
+        android:id="@+id/composeContent"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <LinearLayout
-            android:id="@+id/edit_text_container"
+        <ScrollView
+            android:id="@+id/editTextContainer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <org.mariotaku.twidere.view.ComposeEditText
-                android:id="@+id/edit_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@null"
-                android:gravity="top"
-                android:hint="@string/status_hint"
-                android:inputType="textMultiLine|textLongMessage|textCapSentences"
-                android:minLines="6"
-                android:padding="@dimen/element_spacing_normal"
-                android:scrollbars="vertical"
-                android:singleLine="false"/>
-
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/attached_media_preview"
-                android:layout_width="match_parent"
-                android:layout_height="128dp"
-                android:layout_weight="0"
-                tools:listitem="@layout/grid_item_media_editor"/>
-
+            android:layout_height="wrap_content">
 
             <LinearLayout
-                android:id="@+id/location_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="0"
-                android:background="?selectableItemBackground"
-                android:clickable="true"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:padding="@dimen/element_spacing_normal">
+                android:orientation="vertical">
 
-                <org.mariotaku.twidere.view.ActionIconView
-                    android:id="@+id/location_icon"
-                    android:layout_width="@dimen/element_size_small"
-                    android:layout_height="@dimen/element_size_small"
-                    android:layout_marginLeft="@dimen/element_spacing_normal"
-                    android:layout_marginRight="@dimen/element_spacing_normal"
-                    android:color="?android:textColorSecondary"
-                    android:src="@drawable/ic_action_location"/>
-
-                <org.mariotaku.twidere.view.themed.ThemedTextView
-                    android:id="@+id/location_text"
+                <TextView
+                    android:id="@+id/replyLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/element_spacing_normal"
-                    android:layout_marginRight="@dimen/element_spacing_normal"/>
+                    android:background="?android:panelColorBackground"
+                    android:ellipsize="end"
+                    android:padding="@dimen/element_spacing_normal"
+                    android:singleLine="true"
+                    tools:text="In reply to name: A quick brown fox jumps over the lazy dog"/>
+
+                <View
+                    android:id="@+id/replyLabelDivider"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?dividerVertical"/>
+
+                <org.mariotaku.twidere.view.ComposeEditText
+                    android:id="@+id/editText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:gravity="top"
+                    android:hint="@string/status_hint"
+                    android:inputType="textMultiLine|textLongMessage|textCapSentences"
+                    android:minLines="@integer/default_compose_min_lines"
+                    android:padding="@dimen/element_spacing_normal"
+                    android:singleLine="false"
+                    tools:minLines="@integer/media_compose_min_lines"/>
+
+                <org.mariotaku.twidere.view.ExtendedRecyclerView
+                    android:id="@+id/attachedMediaPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="128dp"
+                    android:clipChildren="false"
+                    tools:listitem="@layout/grid_item_media_editor"/>
+
+                <RelativeLayout
+                    android:id="@+id/locationContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?selectableItemBackground"
+                    android:clickable="false"
+                    android:orientation="horizontal"
+                    android:paddingBottom="@dimen/element_spacing_normal"
+                    android:paddingLeft="@dimen/element_spacing_normal"
+                    android:paddingRight="@dimen/element_spacing_normal"
+                    android:paddingTop="@dimen/element_spacing_normal">
+
+                    <org.mariotaku.twidere.view.IconActionView
+                        android:id="@+id/locationIcon"
+                        android:layout_width="@dimen/element_size_small"
+                        android:layout_height="@dimen/element_size_small"
+                        android:layout_alignParentLeft="true"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:src="@drawable/ic_action_location"
+                        android:tag="iab_activated_color|accent_color"
+                        app:iabActivatedColor="?colorAccent"
+                        app:iabColor="?android:textColorSecondary"
+                        tools:activated="true"/>
+
+                    <TextView
+                        android:id="@+id/locationText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="@dimen/element_spacing_normal"
+                        android:layout_marginRight="@dimen/element_spacing_normal"
+                        android:layout_toEndOf="@+id/locationIcon"
+                        android:layout_toLeftOf="@+id/locationSwitch"
+                        android:layout_toRightOf="@+id/locationIcon"
+                        android:layout_toStartOf="@+id/locationSwitch"
+                        android:paddingLeft="@dimen/element_spacing_normal"
+                        android:paddingRight="@dimen/element_spacing_normal"
+                        android:singleLine="true"
+                        tools:text="11.4, 51.4"/>
+
+                    <org.mariotaku.twidere.view.ThemedMultiValueSwitch
+                        android:id="@+id/locationSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:tag="mvs_tint|accent_color"
+                        tools:max="3"
+                        tools:position="2"/>
+
+                </RelativeLayout>
 
             </LinearLayout>
-
-        </LinearLayout>
+        </ScrollView>
 
         <FrameLayout
-            android:id="@+id/account_selector_container"
+            android:id="@+id/accountSelectorContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_alignBottom="@+id/edit_text_container"
-            android:layout_alignEnd="@+id/edit_text_container"
-            android:layout_alignLeft="@+id/edit_text_container"
-            android:layout_alignRight="@+id/edit_text_container"
-            android:layout_alignStart="@+id/edit_text_container"
-            android:layout_alignTop="@+id/edit_text_container"
+            android:layout_alignBottom="@+id/editTextContainer"
+            android:layout_alignEnd="@+id/editTextContainer"
+            android:layout_alignLeft="@+id/editTextContainer"
+            android:layout_alignRight="@+id/editTextContainer"
+            android:layout_alignStart="@+id/editTextContainer"
+            android:layout_alignTop="@+id/editTextContainer"
             android:visibility="gone">
 
             <org.mariotaku.twidere.view.ExtendedRecyclerView
-                android:id="@+id/account_selector"
+                android:id="@+id/accountSelector"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="start"
@@ -120,14 +163,14 @@
         android:background="?dividerVertical"/>
 
     <RelativeLayout
-        android:id="@+id/compose_bottombar"
+        android:id="@+id/composeBottombar"
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
         android:background="?android:panelColorBackground"
         android:baselineAligned="false">
 
         <RelativeLayout
-            android:id="@+id/account_selector_button"
+            android:id="@+id/accountSelectorButton"
             style="?actionButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -142,31 +185,32 @@
             android:paddingTop="@dimen/element_spacing_msmall">
 
             <org.mariotaku.twidere.view.SquareFrameLayout
-                android:id="@+id/account_profile_image_frame"
+                android:id="@+id/accountProfileImageFrame"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent">
 
-                <org.mariotaku.twidere.view.ShapedImageView
-                    android:id="@+id/account_profile_image"
+                <org.mariotaku.twidere.view.ProfileImageView
+                    android:id="@+id/accountProfileImage"
                     style="?profileImageStyle"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_gravity="center"
                     app:sivBackgroundColor="?android:colorBackground"
                     app:sivBorder="true"
-                    app:sivBorderWidth="@dimen/line_width_compose_account_profile_image"/>
+                    app:sivBorderWidth="@dimen/line_width_compose_account_profile_image"
+                    tools:src="@mipmap/ic_launcher"/>
             </org.mariotaku.twidere.view.SquareFrameLayout>
 
             <org.mariotaku.twidere.view.BadgeView
-                android:id="@+id/accounts_count"
+                android:id="@+id/accountsCount"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_alignBottom="@id/account_profile_image_frame"
-                android:layout_alignEnd="@id/account_profile_image_frame"
-                android:layout_alignLeft="@id/account_profile_image_frame"
-                android:layout_alignRight="@id/account_profile_image_frame"
-                android:layout_alignStart="@id/account_profile_image_frame"
-                android:layout_alignTop="@id/account_profile_image_frame"
+                android:layout_alignBottom="@+id/accountProfileImageFrame"
+                android:layout_alignEnd="@+id/accountProfileImageFrame"
+                android:layout_alignLeft="@+id/accountProfileImageFrame"
+                android:layout_alignRight="@+id/accountProfileImageFrame"
+                android:layout_alignStart="@+id/accountProfileImageFrame"
+                android:layout_alignTop="@+id/accountProfileImageFrame"
                 android:layout_gravity="center"
                 android:contentDescription="@string/select_accounts_for_compose"
                 android:textColor="?android:colorForeground"/>
@@ -176,22 +220,23 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_toEndOf="@+id/account_selector_button"
-            android:layout_toLeftOf="@+id/send"
-            android:layout_toRightOf="@+id/account_selector_button"
-            android:layout_toStartOf="@+id/send"
+            android:layout_toEndOf="@+id/accountSelectorButton"
+            android:layout_toLeftOf="@+id/updateStatus"
+            android:layout_toRightOf="@+id/accountSelectorButton"
+            android:layout_toStartOf="@+id/updateStatus"
             android:scrollbars="none">
 
-            <android.support.v7.widget.ActionMenuView
-                android:id="@+id/menu_bar"
+            <android.support.v7.widget.TwidereActionMenuView
+                android:id="@+id/menuBar"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
-                android:background="@null"/>
+                android:background="@null"
+                android:tag="ate_ignore"/>
         </FrameLayout>
 
         <LinearLayout
-            android:id="@+id/send"
+            android:id="@+id/updateStatus"
             style="?actionButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -208,7 +253,7 @@
             android:paddingTop="@dimen/element_spacing_normal">
 
             <org.mariotaku.twidere.view.StatusTextCountView
-                android:id="@+id/status_text_count"
+                android:id="@+id/statusTextCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
@@ -216,15 +261,15 @@
                 android:textAppearance="?android:textAppearanceSmall"
                 tools:text="140"/>
 
-            <org.mariotaku.twidere.view.ActionIconView
+            <org.mariotaku.twidere.view.IconActionView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:color="?android:textColorSecondary"
                 android:contentDescription="@string/send"
                 android:cropToPadding="false"
                 android:padding="@dimen/element_spacing_xsmall"
                 android:scaleType="centerCrop"
-                android:src="@drawable/ic_action_send"/>
+                android:src="@drawable/ic_action_send"
+                tools:tint="?android:textColorSecondary"/>
 
         </LinearLayout>
     </RelativeLayout>

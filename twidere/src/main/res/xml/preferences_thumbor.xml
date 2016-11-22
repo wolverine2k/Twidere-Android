@@ -18,15 +18,16 @@
   ~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
+<!--suppress AndroidElementNotAllowed -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:title="@string/thumbor_integration">
 
-    <org.mariotaku.twidere.preference.AutoFixEditTextPreference
+    <org.mariotaku.twidere.preference.ThemedEditTextPreference
         android:inputType="textUri"
         android:key="thumbor_address"
         android:title="@string/server_address"/>
-    <org.mariotaku.twidere.preference.AutoFixEditTextPreference
+    <org.mariotaku.twidere.preference.ThemedEditTextPreference
         android:inputType="textVisiblePassword"
         android:key="thumbor_security_key"
         android:title="@string/security_key"/>

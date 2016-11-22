@@ -1,23 +1,26 @@
 package org.mariotaku.twidere.model;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import org.mariotaku.library.objectcursor.annotation.CursorField;
 import org.mariotaku.library.objectcursor.annotation.CursorObject;
-import org.mariotaku.twidere.api.twitter.model.Relationship;
+import org.mariotaku.microblog.library.twitter.model.Relationship;
+import org.mariotaku.twidere.model.util.UserKeyCursorFieldConverter;
+import org.mariotaku.twidere.provider.TwidereDataStore;
 import org.mariotaku.twidere.provider.TwidereDataStore.CachedRelationships;
 
 /**
  * Created by mariotaku on 16/2/1.
  */
-@CursorObject(valuesCreator = true)
+@CursorObject(valuesCreator = true, tableInfo = true)
 public class CachedRelationship {
 
-    @CursorField(CachedRelationships.ACCOUNT_ID)
-    public long account_id;
+    @CursorField(value = CachedRelationships.ACCOUNT_KEY, converter = UserKeyCursorFieldConverter.class)
+    public UserKey account_key;
 
-    @CursorField(CachedRelationships.USER_ID)
-    public long user_id;
+    @CursorField(value = CachedRelationships.USER_KEY, converter = UserKeyCursorFieldConverter.class)
+    public UserKey user_key;
 
     @CursorField(CachedRelationships.FOLLOWING)
     public boolean following;
@@ -37,18 +40,23 @@ public class CachedRelationship {
     @CursorField(CachedRelationships.RETWEET_ENABLED)
     public boolean retweet_enabled;
 
+    @CursorField(value = CachedRelationships._ID, excludeWrite = true, type = TwidereDataStore.TYPE_PRIMARY_KEY)
+    public long _id;
+
     public CachedRelationship() {
 
     }
 
-    public CachedRelationship(long accountId, long userId, @NonNull Relationship relationship) {
-        account_id = accountId;
-        user_id = userId;
-        following = relationship.isSourceFollowingTarget();
-        following = relationship.isSourceFollowedByTarget();
-        blocking = relationship.isSourceBlockingTarget();
-        blocked_by = relationship.isSourceBlockedByTarget();
-        muting = relationship.isSourceMutingTarget();
-        retweet_enabled = relationship.isSourceWantRetweetsFromTarget();
+    public CachedRelationship(@Nullable Relationship relationship, @NonNull UserKey accountKey, @NonNull UserKey userKey) {
+        account_key = accountKey;
+        user_key = userKey;
+        if (relationship != null) {
+            following = relationship.isSourceFollowingTarget();
+            followed_by = relationship.isSourceFollowedByTarget();
+            blocking = relationship.isSourceBlockingTarget();
+            blocked_by = relationship.isSourceBlockedByTarget();
+            muting = relationship.isSourceMutingTarget();
+            retweet_enabled = relationship.isSourceWantRetweetsFromTarget();
+        }
     }
 }

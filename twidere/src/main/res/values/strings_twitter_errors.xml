@@ -20,6 +20,8 @@
     <!-- 136 Blocked by user while retweeting: You have been blocked from retweeting this user's tweets at their request. -->
     <string name="error_twitter_136">You\'ve been blocked by this user.</string>
     <string name="error_twitter_139">You\'ve already favorited this tweet.</string>
+    <!-- 144 No status found with that ID. -->
+    <string name="error_twitter_144">Tweet not found, perhaps it\'s been deleted.</string>
     <string name="error_twitter_161">You\'ve already requested to follow this user.</string>
     <!-- 172 You have been blocked from following this account at the request of the user. -->
     <string name="error_twitter_162">You\'ve been blocked by this user.</string>
@@ -32,5 +34,6 @@
     <string name="error_twitter_193">The photo you upload is too large.</string>
     <!-- 215 Bad authentication data: Typically sent with 1.1 responses with HTTP code 400. The method requires authentication but it was not presented or was wholly invalid -->
     <string name="error_twitter_215">You may need to sign in again.</string>
+    <string name="error_twitter_326">Your account was suspended, please visit https://twitter.com/ for details.</string>
 
 </resources>

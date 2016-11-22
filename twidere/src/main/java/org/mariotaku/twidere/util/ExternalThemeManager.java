@@ -29,17 +29,17 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.res.ResourcesCompat;
 import android.util.LruCache;
 
-import org.mariotaku.twidere.Constants;
-
 import java.util.Locale;
 
 import javax.inject.Singleton;
+
+import static org.mariotaku.twidere.constant.SharedPreferenceConstants.KEY_EMOJI_SUPPORT;
 
 /**
  * Created by mariotaku on 15/12/20.
  */
 @Singleton
-public class ExternalThemeManager implements Constants {
+public class ExternalThemeManager {
     private final Application application;
     private final SharedPreferencesWrapper preferences;
 
@@ -62,14 +62,18 @@ public class ExternalThemeManager implements Constants {
             final ComponentName componentName = ComponentName.unflattenFromString(emojiComponentName);
             if (componentName != null) {
                 emojiPackageName = componentName.getPackageName();
+            } else {
+                emojiPackageName = null;
             }
+        } else {
+            emojiPackageName = null;
         }
         initEmojiSupport();
     }
 
     public void initEmojiSupport() {
         if (emojiPackageName == null) {
-            emojiPackageName = null;
+            emoji = null;
             return;
         }
         emoji = new Emoji(application, emojiPackageName);

@@ -23,23 +23,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragment.DirectMessagesConversationFragment">
+    tools:context=".fragment.MessagesConversationFragment">
 
     <RelativeLayout
-        android:id="@+id/conversation_container"
+        android:id="@+id/conversationContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
         tools:visibility="visible">
 
         <FrameLayout
-            android:id="@+id/list_container"
+            android:id="@+id/listContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_above="@+id/input_panel">
+            android:layout_above="@+id/inputPanel">
 
             <org.mariotaku.twidere.view.ExtendedRecyclerView
-                android:id="@+id/recycler_view"
+                android:id="@+id/recyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scrollbars="vertical"/>
@@ -47,14 +47,14 @@
         </FrameLayout>
 
         <View
-            android:id="@+id/input_panel_shadow_compat"
+            android:id="@+id/inputPanelShadowCompat"
             android:layout_width="match_parent"
             android:layout_height="@dimen/element_spacing_small"
-            android:layout_above="@+id/input_panel"
+            android:layout_above="@+id/inputPanel"
             android:background="@drawable/shadow_top"/>
 
         <RelativeLayout
-            android:id="@+id/input_panel"
+            android:id="@+id/inputPanel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
@@ -65,8 +65,8 @@
             android:padding="@dimen/element_spacing_normal"
             tools:ignore="UnusedAttribute">
 
-            <org.mariotaku.twidere.view.ActionIconView
-                android:id="@+id/add_image"
+            <org.mariotaku.twidere.view.IconActionView
+                android:id="@+id/addImage"
                 android:layout_width="@dimen/element_size_normal"
                 android:layout_height="@dimen/element_size_normal"
                 android:layout_alignParentLeft="true"
@@ -76,10 +76,11 @@
                 android:color="?android:textColorSecondary"
                 android:contentDescription="@string/add_image"
                 android:scaleType="centerInside"
-                android:src="@drawable/ic_action_gallery"/>
+                android:src="@drawable/ic_action_gallery"
+                android:visibility="gone"/>
 
-            <org.mariotaku.twidere.view.ActionIconView
-                android:id="@+id/send"
+            <org.mariotaku.twidere.view.IconActionView
+                android:id="@+id/sendMessage"
                 android:layout_width="@dimen/element_size_normal"
                 android:layout_height="@dimen/element_size_normal"
                 android:layout_alignParentEnd="true"
@@ -92,14 +93,15 @@
                 android:src="@drawable/ic_action_send"/>
 
             <org.mariotaku.messagebubbleview.library.MessageBubbleView
-                android:id="@+id/edit_text_container"
+                android:id="@+id/editTextContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignWithParentIfMissing="true"
                 android:layout_gravity="end"
-                android:layout_toEndOf="@+id/add_image"
-                android:layout_toLeftOf="@+id/send"
-                android:layout_toRightOf="@+id/add_image"
-                android:layout_toStartOf="@+id/send"
+                android:layout_toEndOf="@+id/addImage"
+                android:layout_toLeftOf="@+id/sendMessage"
+                android:layout_toRightOf="@+id/addImage"
+                android:layout_toStartOf="@+id/sendMessage"
                 app:bubbleColor="?messageBubbleColor"
                 app:caretHeight="8dp"
                 app:caretPosition="topEnd"
@@ -113,7 +115,7 @@
                     android:padding="@dimen/element_spacing_normal">
 
                     <org.mariotaku.twidere.view.ComposeEditText
-                        android:id="@+id/edit_text"
+                        android:id="@+id/editText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
@@ -139,14 +141,14 @@
     </RelativeLayout>
 
     <FrameLayout
-        android:id="@+id/recipient_selector_container"
+        android:id="@+id/recipientSelectorContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="visible"
         tools:visibility="gone">
 
         <ListView
-            android:id="@+id/users_search_list"
+            android:id="@+id/usersSearchList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingLeft="@dimen/element_spacing_normal"
@@ -154,7 +156,7 @@
             android:scrollbarStyle="outsideInset"/>
 
         <LinearLayout
-            android:id="@+id/users_search_empty"
+            android:id="@+id/usersSearchEmpty"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
@@ -162,14 +164,14 @@
             android:paddingLeft="@dimen/element_spacing_normal"
             android:paddingRight="@dimen/element_spacing_normal">
 
-            <org.mariotaku.twidere.view.ActionIconView
+            <org.mariotaku.twidere.view.IconActionView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:color="?android:textColorSecondary"
                 android:src="@drawable/ic_info_search"/>
 
             <TextView
-                android:id="@+id/users_search_empty_text"
+                android:id="@+id/usersSearchEmptyText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -179,7 +181,7 @@
         </LinearLayout>
 
         <ProgressBar
-            android:id="@+id/users_search_progress"
+            android:id="@+id/usersSearchProgress"
             style="?android:progressBarStyleLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

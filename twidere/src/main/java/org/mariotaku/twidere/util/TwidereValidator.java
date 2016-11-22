@@ -19,34 +19,63 @@
 
 package org.mariotaku.twidere.util;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.twitter.Validator;
 
-import org.apache.commons.lang3.math.NumberUtils;
-import org.mariotaku.twidere.Constants;
+import org.mariotaku.twidere.model.ParcelableAccount;
+import org.mariotaku.twidere.model.ParcelableCredentials;
+import org.mariotaku.twidere.model.StatusNetAccountExtra;
 
-public class TwidereValidator implements Constants {
+public class TwidereValidator {
 
-    private final int mMaxTweetLength;
     private final Validator mValidator;
 
-    public TwidereValidator(final SharedPreferencesWrapper preferences) {
+    public TwidereValidator() {
         mValidator = new Validator();
-        final String textLimit = preferences.getString(KEY_STATUS_TEXT_LIMIT, null);
-        mMaxTweetLength = NumberUtils.toInt(textLimit, Validator.MAX_TWEET_LENGTH);
     }
 
-    public int getMaxTweetLength() {
-        return mMaxTweetLength;
+    public static int getTextLimit(@NonNull ParcelableCredentials[] credentials) {
+        int limit = -1;
+        for (ParcelableCredentials credential : credentials) {
+            int currentLimit = getTextLimit(credential);
+            if (currentLimit != 0) {
+                if (limit <= 0) {
+                    limit = currentLimit;
+                } else {
+                    limit = Math.min(limit, currentLimit);
+                }
+            }
+        }
+        return limit;
     }
 
-    public int getTweetLength(final String text) {
+    /**
+     * @param credentials Account for getting limit
+     * @return Text limit, <= 0 if no limit
+     */
+    public static int getTextLimit(@NonNull ParcelableCredentials credentials) {
+        if (credentials.account_type == null) {
+            return Validator.MAX_TWEET_LENGTH;
+        }
+        switch (credentials.account_type) {
+            case ParcelableAccount.Type.STATUSNET: {
+                StatusNetAccountExtra extra = JsonSerializer.parse(credentials.account_extras,
+                        StatusNetAccountExtra.class);
+                if (extra != null) {
+                    return extra.getTextLimit();
+                }
+                break;
+            }
+        }
+        return Validator.MAX_TWEET_LENGTH;
+    }
+
+    public int getTweetLength(@Nullable final String text) {
+        if (text == null) return 0;
         return mValidator.getTweetLength(text);
-    }
-
-    public boolean isValidTweet(final String text) {
-        return !TextUtils.isEmpty(text) && getTweetLength(text) <= getMaxTweetLength();
     }
 
     public boolean isValidDirectMessage(final CharSequence text) {

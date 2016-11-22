@@ -10,11 +10,9 @@ import android.support.v4.util.SparseArrayCompat;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 
-import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.activity.support.ComposeActivity;
-import org.mariotaku.twidere.activity.support.QuickSearchBarActivity;
-import org.mariotaku.twidere.app.TwidereApplication;
+import org.mariotaku.twidere.activity.ComposeActivity;
+import org.mariotaku.twidere.activity.QuickSearchBarActivity;
 import org.mariotaku.twidere.constant.KeyboardShortcutConstants;
 
 import java.util.HashMap;
@@ -23,8 +21,12 @@ import java.util.Map.Entry;
 
 import javax.inject.Singleton;
 
+import static org.mariotaku.twidere.TwidereConstants.KEYBOARD_SHORTCUTS_PREFERENCES_NAME;
+import static org.mariotaku.twidere.constant.IntentConstants.INTENT_ACTION_COMPOSE;
+import static org.mariotaku.twidere.constant.IntentConstants.INTENT_ACTION_QUICK_SEARCH;
+
 @Singleton
-public class KeyboardShortcutsHandler implements Constants, KeyboardShortcutConstants {
+public class KeyboardShortcutsHandler implements KeyboardShortcutConstants {
 
     public static final int MODIFIER_FLAG_CTRL = 0x00000001;
     public static final int MODIFIER_FLAG_SHIFT = 0x00000002;
@@ -64,8 +66,9 @@ public class KeyboardShortcutsHandler implements Constants, KeyboardShortcutCons
 
     private final SharedPreferencesWrapper mPreferences;
 
-    public KeyboardShortcutsHandler(final TwidereApplication context) {
-        mPreferences = SharedPreferencesWrapper.getInstance(context, KEYBOARD_SHORTCUTS_PREFERENCES_NAME, Context.MODE_PRIVATE);
+    public KeyboardShortcutsHandler(final Context context) {
+        mPreferences = SharedPreferencesWrapper.getInstance(context,
+                KEYBOARD_SHORTCUTS_PREFERENCES_NAME, Context.MODE_PRIVATE);
     }
 
     public String findAction(@NonNull KeyboardShortcutSpec spec) {
@@ -170,7 +173,7 @@ public class KeyboardShortcutsHandler implements Constants, KeyboardShortcutCons
                 return true;
             }
             case ACTION_MESSAGE: {
-                Utils.openMessageConversation(context, -1, -1);
+                IntentUtils.openMessageConversation(context, null, null);
                 return true;
             }
         }

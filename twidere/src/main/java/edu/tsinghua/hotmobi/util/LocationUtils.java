@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import org.mariotaku.twidere.BuildConfig;
@@ -20,9 +21,12 @@ import edu.tsinghua.hotmobi.model.LatLng;
  * Created by mariotaku on 16/1/29.
  */
 public class LocationUtils implements HotMobiConstants, Constants {
-    public static LatLng getCachedLatLng(final Context context) {
+    private LocationUtils() {
+    }
+
+    public static LatLng getCachedLatLng(@NonNull final Context context) {
         final Context appContext = context.getApplicationContext();
-        final SharedPreferences prefs = DependencyHolder.get(context).getPreferences();
+        final SharedPreferences prefs = DependencyHolder.Companion.get(context).getPreferences();
         if (!prefs.getBoolean(KEY_USAGE_STATISTICS, false)) return null;
         if (BuildConfig.DEBUG) {
             Log.d(HotMobiLogger.LOGTAG, "getting cached location");

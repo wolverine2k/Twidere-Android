@@ -23,8 +23,6 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 
-import org.mariotaku.twidere.app.TwidereApplication;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -36,8 +34,8 @@ public class NotificationManagerWrapper {
     private final NotificationManager notificationManager;
     private final List<PostedNotification> notifications = new CopyOnWriteArrayList<>();
 
-    public NotificationManagerWrapper(TwidereApplication application) {
-        notificationManager = (NotificationManager) application.getSystemService(Context.NOTIFICATION_SERVICE);
+    public NotificationManagerWrapper(Context context) {
+        notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
     public void notify(String tag, int id, Notification notification) {

@@ -27,6 +27,9 @@ import android.text.TextUtils;
  * Created by mariotaku on 15/11/22.
  */
 public class CheckUtils {
+    private CheckUtils() {
+    }
+
     public static boolean checkRange(@Nullable final CharSequence text, int start, int end) {
         if (text == null) return false;
 
@@ -40,10 +43,7 @@ public class CheckUtils {
             return false;
         }
 
-        if (start < 0 || end < 0) {
-            return false;
-        }
-        return true;
+        return !(start < 0 || end < 0);
     }
 
     public static boolean isValidLocale(String locale) {

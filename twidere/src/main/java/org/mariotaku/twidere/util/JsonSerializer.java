@@ -19,36 +19,54 @@
 
 package org.mariotaku.twidere.util;
 
-import android.content.Context;
 import android.support.annotation.Nullable;
 
-import com.bluelinelabs.logansquare.LoganSquare;
+import com.bluelinelabs.logansquare.JsonMapper;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.mariotaku.commons.logansquare.LoganSquareMapperFinder;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Array;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mariotaku on 15/8/6.
  */
 public class JsonSerializer {
 
+    private JsonSerializer() {
+    }
+
     @Nullable
     public static <T> String serialize(@Nullable final List<T> list, final Class<T> cls) {
         if (list == null) return null;
         try {
-            return LoganSquare.serialize(list, cls);
+            return LoganSquareMapperFinder.mapperFor(cls).serialize(list);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    @Nullable
+    public static <T> String serialize(@Nullable final Map<String, T> list, final Class<T> cls) {
+        if (list == null) return null;
+        try {
+            return LoganSquareMapperFinder.mapperFor(cls).serialize(list);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    @Nullable
+    public static <T> String serialize(@Nullable final T[] array, final Class<T> cls) {
+        if (array == null) return null;
+        try {
+            return LoganSquareMapperFinder.mapperFor(cls).serialize(Arrays.asList(array));
         } catch (IOException e) {
             return null;
         }
@@ -58,27 +76,20 @@ public class JsonSerializer {
     public static <T> String serialize(@Nullable final T object, final Class<T> cls) {
         if (object == null) return null;
         try {
-            return LoganSquare.mapperFor(cls).serialize(object);
+            return LoganSquareMapperFinder.mapperFor(cls).serialize(object);
         } catch (IOException e) {
             return null;
         }
     }
 
     @Nullable
-    public static <T> String serializeArray(@Nullable final T[] object, final Class<T> cls) {
+    public static <T> String serialize(@Nullable final T object) {
         if (object == null) return null;
         try {
-            return LoganSquare.mapperFor(cls).serialize(Arrays.asList(object));
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
-    @Nullable
-    public static <T> List<T> parseList(@Nullable final String string, final Class<T> cls) {
-        if (string == null) return null;
-        try {
-            return LoganSquare.mapperFor(cls).parseList(string);
+            //noinspection unchecked
+            final JsonMapper<T> mapper = (JsonMapper<T>)
+                    LoganSquareMapperFinder.mapperFor(object.getClass());
+            return mapper.serialize(object);
         } catch (IOException e) {
             return null;
         }
@@ -88,7 +99,7 @@ public class JsonSerializer {
     public static <T> T[] parseArray(@Nullable final String string, final Class<T> cls) {
         if (string == null) return null;
         try {
-            final List<T> list = LoganSquare.mapperFor(cls).parseList(string);
+            final List<T> list = LoganSquareMapperFinder.mapperFor(cls).parseList(string);
             //noinspection unchecked
             return list.toArray((T[]) Array.newInstance(cls, list.size()));
         } catch (IOException e) {
@@ -100,49 +111,42 @@ public class JsonSerializer {
     public static <T> T parse(@Nullable final String string, final Class<T> cls) {
         if (string == null) return null;
         try {
-            return LoganSquare.mapperFor(cls).parse(string);
+            return LoganSquareMapperFinder.mapperFor(cls).parse(string);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    public static <E> List<E> parseList(File file, Class<E> cls) {
+        FileInputStream is = null;
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            is = new FileInputStream(file);
+            return parseList(is, cls);
+        } catch (IOException e) {
+            return null;
+        } finally {
+            Utils.closeSilently(is);
+        }
+    }
+
+    public static <E> List<E> parseList(InputStream stream, Class<E> cls) {
+        try {
+            return LoganSquareMapperFinder.mapperFor(cls).parseList(stream);
         } catch (IOException e) {
             return null;
         }
     }
 
     @Nullable
-    public static <T> String serialize(@Nullable final T obj) {
-        if (obj == null) return null;
-        //noinspection unchecked
-        return serialize(obj, (Class<T>) obj.getClass());
-    }
-
-    public static <E> List<E> parseList(File file, Class<E> jsonObjectClass) throws IOException {
-        final FileInputStream is = new FileInputStream(file);
+    public static <E> List<E> parseList(@Nullable String json, Class<E> cls) {
+        if (json == null) return null;
         //noinspection TryFinallyCanBeTryWithResources
         try {
-            return LoganSquare.parseList(is, jsonObjectClass);
-        } finally {
-            is.close();
+            return LoganSquareMapperFinder.mapperFor(cls).parseList(json);
+        } catch (IOException e) {
+            return null;
         }
-    }
-
-    public static JSONObject convertJSONObject(final InputStream stream) throws IOException {
-        final String string = convertString(stream);
-        try {
-            return new JSONObject(string);
-        } catch (final JSONException e) {
-            throw new IOException(e);
-        }
-    }
-
-    public static String convertString(final InputStream stream) throws IOException {
-        if (stream == null) throw new FileNotFoundException();
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, Charset.defaultCharset()));
-        final StringBuilder buf = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            buf.append(line);
-            buf.append('\n');
-        }
-        reader.close();
-        return buf.toString();
     }
 
 }

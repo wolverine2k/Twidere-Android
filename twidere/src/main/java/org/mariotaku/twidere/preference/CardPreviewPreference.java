@@ -22,22 +22,23 @@ package org.mariotaku.twidere.preference;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.preference.Preference;
-import android.support.annotation.NonNull;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceViewHolder;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.view.View;
-import android.view.ViewGroup;
 
-import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.adapter.DummyStatusHolderAdapter;
+import org.mariotaku.twidere.adapter.DummyItemAdapter;
+import org.mariotaku.twidere.graphic.like.LikeAnimationDrawable;
 import org.mariotaku.twidere.view.holder.StatusViewHolder;
+import org.mariotaku.twidere.view.holder.iface.IStatusViewHolder;
 
-public class CardPreviewPreference extends Preference implements Constants, OnSharedPreferenceChangeListener {
+import static org.mariotaku.twidere.TwidereConstants.SHARED_PREFERENCES_NAME;
+
+public class CardPreviewPreference extends Preference implements OnSharedPreferenceChangeListener {
 
     private StatusViewHolder mHolder;
-    private boolean mCompactModeChanged;
-    private DummyStatusHolderAdapter mAdapter;
+    private DummyItemAdapter mAdapter;
 
     public CardPreviewPreference(final Context context) {
         this(context, null);
@@ -51,50 +52,39 @@ public class CardPreviewPreference extends Preference implements Constants, OnSh
         super(context, attrs, defStyle);
         final SharedPreferences preferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME,
                 Context.MODE_PRIVATE);
-        setLayoutResources(preferences);
+        setLayoutResource(R.layout.layout_preferences_card_preview_compact);
         preferences.registerOnSharedPreferenceChangeListener(this);
-        mAdapter = new DummyStatusHolderAdapter(context);
-    }
-
-    @Override
-    public View getView(final View convertView, final ViewGroup parent) {
-        if (mCompactModeChanged) return super.getView(null, parent);
-        return super.getView(convertView, parent);
+        mAdapter = new DummyItemAdapter(context);
     }
 
     @Override
     public void onSharedPreferenceChanged(final SharedPreferences preferences, final String key) {
         if (mHolder == null) return;
-        if (KEY_COMPACT_CARDS.equals(key)) {
-            setLayoutResources(preferences);
-        }
         mAdapter.updateOptions();
         notifyChanged();
     }
 
-    protected void setLayoutResources(SharedPreferences preferences) {
-        if (preferences.getBoolean(KEY_COMPACT_CARDS, false)) {
-            setLayoutResource(R.layout.card_item_status_compact);
-        } else {
-            setLayoutResource(R.layout.card_item_status);
-        }
-    }
-
-
     @Override
-    protected void onBindView(@NonNull final View view) {
-        if (mHolder == null) return;
-        mCompactModeChanged = false;
+    public void onBindViewHolder(PreferenceViewHolder holder) {
+        if (mHolder == null) {
+            mHolder = new StatusViewHolder(mAdapter, holder.itemView);
+        }
         mHolder.setupViewOptions();
         mHolder.displaySampleStatus();
-        super.onBindView(view);
-    }
-
-    @Override
-    protected View onCreateView(final ViewGroup parent) {
-        final View statusView = super.onCreateView(parent);
-        mHolder = new StatusViewHolder(mAdapter, statusView);
-        return statusView;
+        mHolder.setStatusClickListener(new IStatusViewHolder.SimpleStatusClickListener() {
+            @Override
+            public void onItemActionClick(RecyclerView.ViewHolder holder, int id, int position) {
+                if (id == R.id.favorite) {
+                    ((StatusViewHolder) holder).playLikeAnimation(new LikeAnimationDrawable.OnLikedListener() {
+                        @Override
+                        public boolean onLiked() {
+                            return false;
+                        }
+                    });
+                }
+            }
+        });
+        super.onBindViewHolder(holder);
     }
 
 }

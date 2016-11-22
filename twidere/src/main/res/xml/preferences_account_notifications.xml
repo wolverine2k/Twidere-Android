@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-                  xmlns:app="http://schemas.android.com/apk/res-auto"
-                  android:title="@string/notifications">
+<!--suppress AndroidElementNotAllowed -->
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:title="@string/notifications">
 
     <org.mariotaku.twidere.preference.NotificationContentPreference
         android:key="content_to_notify"
         android:title="@string/content_to_notify"/>
 
-    <RingtonePreference
+    <org.mariotaku.twidere.preference.RingtonePreference
         android:key="notification_ringtone"
         android:ringtoneType="notification"
         android:showDefault="true"
@@ -47,12 +49,12 @@
     <PreferenceCategory
         android:key="cat_other_settings"
         android:title="@string/other_settings">
-        <org.mariotaku.twidere.preference.AutoFixCheckBoxPreference
+        <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="notification_following_only"
             android:summary="@string/following_only_summary"
             android:title="@string/following_only"/>
-        <org.mariotaku.twidere.preference.AutoFixCheckBoxPreference
+        <SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="notification_mentions_only"
             android:title="@string/mentions_only"/>

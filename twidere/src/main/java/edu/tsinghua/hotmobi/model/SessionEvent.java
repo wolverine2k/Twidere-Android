@@ -33,9 +33,11 @@ import com.hannesdorfmann.parcelableplease.annotation.ParcelablePlease;
 import com.hannesdorfmann.parcelableplease.annotation.ParcelableThisPlease;
 
 import org.mariotaku.twidere.model.AccountPreferences;
+import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.util.DataStoreUtils;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by mariotaku on 15/8/8.
@@ -78,7 +80,7 @@ public class SessionEvent extends BaseEvent implements Parcelable {
         return configuration;
     }
 
-    public HashMap<String, String> getPreferences() {
+    public Map<String, String> getPreferences() {
         return preferences;
     }
 
@@ -86,7 +88,7 @@ public class SessionEvent extends BaseEvent implements Parcelable {
         this.preferences = preferences;
     }
 
-    public HashMap<String, String> getDevicePreferences() {
+    public Map<String, String> getDevicePreferences() {
         return devicePreferences;
     }
 
@@ -96,10 +98,10 @@ public class SessionEvent extends BaseEvent implements Parcelable {
 
     public void dumpPreferences(Context context) {
         final HashMap<String, String> preferences = new HashMap<>();
-        for (AccountPreferences pref : AccountPreferences.getAccountPreferences(context, DataStoreUtils.getAccountIds(context))) {
-            final long accountId = pref.getAccountId();
-            preferences.put("notification_" + accountId + "_home", String.valueOf(pref.isHomeTimelineNotificationEnabled()));
-            preferences.put("notification_" + accountId + "_interactions", String.valueOf(pref.isInteractionsNotificationEnabled()));
+        for (AccountPreferences pref : AccountPreferences.getAccountPreferences(context, DataStoreUtils.getAccountKeys(context))) {
+            final UserKey accountKey = pref.getAccountKey();
+            preferences.put("notification_" + accountKey + "_home", String.valueOf(pref.isHomeTimelineNotificationEnabled()));
+            preferences.put("notification_" + accountKey + "_interactions", String.valueOf(pref.isInteractionsNotificationEnabled()));
         }
         setPreferences(preferences);
         final HashMap<String, String> devicePreferences = new HashMap<>();

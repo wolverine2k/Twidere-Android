@@ -21,6 +21,8 @@ package org.mariotaku.twidere.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.IntDef;
+import android.support.annotation.Nullable;
 
 import com.bluelinelabs.logansquare.annotation.JsonField;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
@@ -31,22 +33,35 @@ import org.mariotaku.library.objectcursor.annotation.CursorField;
 import org.mariotaku.library.objectcursor.annotation.CursorObject;
 import org.mariotaku.twidere.provider.TwidereDataStore.Accounts;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * Created by mariotaku on 15/5/26.
  */
 @JsonObject
-@CursorObject
+@CursorObject(valuesCreator = true)
 @ParcelablePlease
 public class ParcelableCredentials extends ParcelableAccount implements Parcelable {
 
-    public static final int AUTH_TYPE_OAUTH = 0;
-    public static final int AUTH_TYPE_XAUTH = 1;
-    public static final int AUTH_TYPE_BASIC = 2;
-    public static final int AUTH_TYPE_TWIP_O_MODE = 3;
+    public static final Creator<ParcelableCredentials> CREATOR = new Creator<ParcelableCredentials>() {
+        @Override
+        public ParcelableCredentials createFromParcel(Parcel source) {
+            ParcelableCredentials target = new ParcelableCredentials();
+            ParcelableCredentialsParcelablePlease.readFromParcel(target, source);
+            return target;
+        }
+
+        @Override
+        public ParcelableCredentials[] newArray(int size) {
+            return new ParcelableCredentials[size];
+        }
+    };
 
     @ParcelableThisPlease
     @JsonField(name = "auth_type")
     @CursorField(Accounts.AUTH_TYPE)
+    @AuthType
     public int auth_type;
     @ParcelableThisPlease
     @JsonField(name = "consumer_key")
@@ -75,6 +90,7 @@ public class ParcelableCredentials extends ParcelableAccount implements Parcelab
     @ParcelableThisPlease
     @JsonField(name = "api_url_format")
     @CursorField(Accounts.API_URL_FORMAT)
+    @Nullable
     public String api_url_format;
     @ParcelableThisPlease
     @JsonField(name = "same_oauth_signing_url")
@@ -85,15 +101,29 @@ public class ParcelableCredentials extends ParcelableAccount implements Parcelab
     @CursorField(Accounts.NO_VERSION_SUFFIX)
     public boolean no_version_suffix;
 
+    @ParcelableThisPlease
+    @JsonField(name = "account_extras")
+    @CursorField(Accounts.ACCOUNT_EXTRAS)
+    public String account_extras;
+
     ParcelableCredentials() {
     }
 
     @Override
     public String toString() {
-        return "AccountWithCredentials{auth_type=" + auth_type + ", consumer_key=" + consumer_key
-                + ", consumer_secret=" + consumer_secret + ", basic_auth_password=" + basic_auth_password
-                + ", oauth_token=" + oauth_token + ", oauth_token_secret=" + oauth_token_secret
-                + ", api_url_format=" + api_url_format + ", same_oauth_signing_url=" + same_oauth_signing_url + "}";
+        return "ParcelableCredentials{" +
+                "auth_type=" + auth_type +
+                ", consumer_key='" + consumer_key + '\'' +
+                ", consumer_secret='" + consumer_secret + '\'' +
+                ", basic_auth_username='" + basic_auth_username + '\'' +
+                ", basic_auth_password='" + basic_auth_password + '\'' +
+                ", oauth_token='" + oauth_token + '\'' +
+                ", oauth_token_secret='" + oauth_token_secret + '\'' +
+                ", api_url_format='" + api_url_format + '\'' +
+                ", same_oauth_signing_url=" + same_oauth_signing_url +
+                ", no_version_suffix=" + no_version_suffix +
+                ", account_extras='" + account_extras + '\'' +
+                "} " + super.toString();
     }
 
     @Override
@@ -106,15 +136,15 @@ public class ParcelableCredentials extends ParcelableAccount implements Parcelab
         ParcelableCredentialsParcelablePlease.writeToParcel(this, dest, flags);
     }
 
-    public static final Creator<ParcelableCredentials> CREATOR = new Creator<ParcelableCredentials>() {
-        public ParcelableCredentials createFromParcel(Parcel source) {
-            ParcelableCredentials target = new ParcelableCredentials();
-            ParcelableCredentialsParcelablePlease.readFromParcel(target, source);
-            return target;
-        }
+    @IntDef({AuthType.OAUTH, AuthType.XAUTH, AuthType.BASIC, AuthType.TWIP_O_MODE,
+            AuthType.OAUTH2})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface AuthType {
 
-        public ParcelableCredentials[] newArray(int size) {
-            return new ParcelableCredentials[size];
-        }
-    };
+        int OAUTH = 0;
+        int XAUTH = 1;
+        int BASIC = 2;
+        int TWIP_O_MODE = 3;
+        int OAUTH2 = 4;
+    }
 }

@@ -23,7 +23,7 @@ import android.support.annotation.NonNull;
 
 import com.rengwuxian.materialedittext.validation.METValidator;
 
-import org.mariotaku.twidere.util.TwitterAPIFactory;
+import org.mariotaku.twidere.util.MicroBlogAPIFactory;
 
 /**
  * Created by mariotaku on 15/9/3.
@@ -35,7 +35,7 @@ public class ConsumerKeySecretValidator extends METValidator {
 
     @Override
     public boolean isValid(@NonNull CharSequence text, boolean isEmpty) {
-        return TwitterAPIFactory.isValidConsumerKeySecret(text);
+        return MicroBlogAPIFactory.isValidConsumerKeySecret(text);
     }
 
 }

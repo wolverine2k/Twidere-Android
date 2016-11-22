@@ -19,6 +19,7 @@
 
 package org.mariotaku.twidere.nyan;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -30,6 +31,7 @@ import android.os.PowerManager;
 import android.service.wallpaper.WallpaperService;
 import android.view.SurfaceHolder;
 
+@SuppressLint("Registered")
 public class NyanWallpaperService extends WallpaperService implements NyanConstants {
 
     @Override
@@ -82,7 +84,7 @@ public class NyanWallpaperService extends WallpaperService implements NyanConsta
         }
 
         @Override
-        public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
+        public void onSharedPreferenceChanged(final SharedPreferences preferences, final String key) {
             if (KEY_LIVE_WALLPAPER_SCALE.equals(key)) {
                 updateSurface();
             }

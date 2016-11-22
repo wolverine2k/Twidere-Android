@@ -37,14 +37,14 @@ public class IncomingMessageViewHolder extends MessageViewHolder {
 
     public IncomingMessageViewHolder(MessageConversationAdapter adapter, View itemView) {
         super(adapter, itemView);
-        profileImageView = (ImageView) itemView.findViewById(R.id.profile_image);
+        profileImageView = (ImageView) itemView.findViewById(R.id.profileImage);
     }
 
     @Override
     public void displayMessage(Cursor cursor, ParcelableDirectMessageCursorIndices indices) {
         super.displayMessage(cursor, indices);
         final MediaLoaderWrapper wrapper = adapter.getMediaLoader();
-        if (adapter.isProfileImageEnabled()) {
+        if (adapter.getProfileImageEnabled()) {
             profileImageView.setVisibility(View.VISIBLE);
             wrapper.displayProfileImage(profileImageView, cursor.getString(indices.sender_profile_image_url));
         } else {

@@ -23,24 +23,25 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.PorterDuff.Mode;
 import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.FilterQueryProvider;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
+import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.provider.TwidereDataStore.Suggestions;
 import org.mariotaku.twidere.util.MediaLoaderWrapper;
 import org.mariotaku.twidere.util.SharedPreferencesWrapper;
 import org.mariotaku.twidere.util.UserColorNameManager;
 import org.mariotaku.twidere.util.dagger.GeneralComponentHelper;
-import org.mariotaku.twidere.view.ProfileImageView;
 
 import javax.inject.Inject;
-
 
 public class ComposeAutoCompleteAdapter extends SimpleCursorAdapter implements Constants {
 
@@ -57,7 +58,7 @@ public class ComposeAutoCompleteAdapter extends SimpleCursorAdapter implements C
     private final boolean mDisplayProfileImage;
 
     private int mTypeIdx, mIconIdx, mTitleIdx, mSummaryIdx, mExtraIdIdx, mValueIdx;
-    private long mAccountId;
+    private UserKey accountKey;
     private char mToken;
 
     public ComposeAutoCompleteAdapter(final Context context) {
@@ -70,14 +71,15 @@ public class ComposeAutoCompleteAdapter extends SimpleCursorAdapter implements C
     public void bindView(final View view, final Context context, final Cursor cursor) {
         final TextView text1 = (TextView) view.findViewById(android.R.id.text1);
         final TextView text2 = (TextView) view.findViewById(android.R.id.text2);
-        final ProfileImageView icon = (ProfileImageView) view.findViewById(android.R.id.icon);
+        final ImageView icon = (ImageView) view.findViewById(android.R.id.icon);
 
         // Clear images in order to prevent images in recycled view shown.
         icon.setImageDrawable(null);
 
         if (Suggestions.AutoComplete.TYPE_USERS.equals(cursor.getString(mTypeIdx))) {
-            text1.setText(mUserColorNameManager.getUserNickname(cursor.getLong(mExtraIdIdx), cursor.getString(mTitleIdx)));
-            text2.setText('@' + cursor.getString(mSummaryIdx));
+            text1.setText(mUserColorNameManager.getUserNickname(cursor.getString(mExtraIdIdx),
+                    cursor.getString(mTitleIdx)));
+            text2.setText(String.format("@%s", cursor.getString(mSummaryIdx)));
             if (mDisplayProfileImage) {
                 final String profileImageUrl = cursor.getString(mIconIdx);
                 mProfileImageLoader.displayProfileImage(icon, profileImageUrl);
@@ -87,7 +89,7 @@ public class ComposeAutoCompleteAdapter extends SimpleCursorAdapter implements C
 
             icon.clearColorFilter();
         } else {
-            text1.setText('#' + cursor.getString(mTitleIdx));
+            text1.setText(String.format("#%s", cursor.getString(mTitleIdx)));
             text2.setText(R.string.hashtag);
 
             icon.setImageResource(R.drawable.ic_action_hashtag);
@@ -142,18 +144,23 @@ public class ComposeAutoCompleteAdapter extends SimpleCursorAdapter implements C
                 return null;
             }
         }
-        builder.appendQueryParameter(QUERY_PARAM_ACCOUNT_ID, String.valueOf(mAccountId));
+        builder.appendQueryParameter(QUERY_PARAM_ACCOUNT_KEY, String.valueOf(accountKey));
         return mContext.getContentResolver().query(builder.build(), Suggestions.AutoComplete.COLUMNS,
                 null, null, null);
     }
 
 
-    public void setAccountId(long accountId) {
-        mAccountId = accountId;
+    public void setAccountKey(UserKey accountKey) {
+        this.accountKey = accountKey;
+    }
+
+    public UserKey getAccountKey() {
+        return accountKey;
     }
 
     @Override
-    public Cursor swapCursor(final Cursor cursor) {
+    @Nullable
+    public Cursor swapCursor(@Nullable  final Cursor cursor) {
         if (cursor != null) {
             mTypeIdx = cursor.getColumnIndex(Suggestions.AutoComplete.TYPE);
             mTitleIdx = cursor.getColumnIndex(Suggestions.AutoComplete.TITLE);

@@ -22,12 +22,11 @@ package org.mariotaku.twidere.view;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.support.annotation.ColorInt;
 import android.support.v7.widget.AppCompatTextView;
 import android.util.AttributeSet;
 
 import org.mariotaku.twidere.util.ThemeUtils;
-import org.mariotaku.twidere.util.TwidereValidator;
-import org.mariotaku.twidere.util.dagger.DependencyHolder;
 
 import java.util.Locale;
 
@@ -35,9 +34,11 @@ import static org.mariotaku.twidere.util.Utils.getLocalizedNumber;
 
 public class StatusTextCountView extends AppCompatTextView {
 
+    @ColorInt
     private final int mTextColor;
     private final Locale mLocale;
-    private final TwidereValidator mValidator;
+    private int mTextCount;
+    private int mMaxLength;
 
     public StatusTextCountView(final Context context) {
         this(context, null);
@@ -49,7 +50,6 @@ public class StatusTextCountView extends AppCompatTextView {
 
     public StatusTextCountView(final Context context, final AttributeSet attrs, final int defStyle) {
         super(context, attrs, defStyle);
-        mValidator = DependencyHolder.get(context).getValidator();
         if (isInEditMode()) {
             mTextColor = 0;
             mLocale = Locale.getDefault();
@@ -64,15 +64,44 @@ public class StatusTextCountView extends AppCompatTextView {
     }
 
     public void setTextCount(final int count) {
-        final int maxLength = mValidator.getMaxTweetLength();
+        mTextCount = count;
+        updateTextCount();
+    }
+
+    public void setMaxLength(int maxLength) {
+        mMaxLength = maxLength;
+        updateTextCount();
+    }
+
+    public int getMaxLength() {
+        return mMaxLength;
+    }
+
+    public int getTextCount() {
+        return mTextCount;
+    }
+
+    public void updateTextCount() {
+        if (mMaxLength <= 0) {
+            setText(null);
+            return;
+        }
+        final int count = mTextCount, maxLength = mMaxLength;
         setText(getLocalizedNumber(mLocale, maxLength - count));
-        final boolean exceeded_limit = count < maxLength;
-        final boolean near_limit = count >= maxLength - 10;
-        final float hue = exceeded_limit ? near_limit ? 5 * (maxLength - count) : 50 : 0;
+        final boolean exceededLimit = count < maxLength;
+        final boolean nearLimit = count >= maxLength - 10;
+        final float hue = exceededLimit ? nearLimit ? 5 * (maxLength - count) : 50 : 0;
         final float[] textColorHsv = new float[3];
         Color.colorToHSV(mTextColor, textColorHsv);
-        final float[] errorColorHsv = {hue, 1.0f, 0.75f + textColorHsv[2] / 4};
-        setTextColor(count >= maxLength - 10 ? Color.HSVToColor(errorColorHsv) : mTextColor);
+        final float[] errorColorHsv = new float[3];
+        errorColorHsv[0] = hue;
+        errorColorHsv[1] = 1;
+        errorColorHsv[2] = 0.75f + textColorHsv[2] / 4;
+        if (count >= maxLength - 10) {
+            setTextColor(Color.HSVToColor(errorColorHsv));
+        } else {
+            setTextColor(mTextColor);
+        }
     }
 
 }

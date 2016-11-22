@@ -24,8 +24,10 @@ import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.TypedValue;
+import android.view.ContextMenu;
 import android.view.InputDevice;
 import android.view.MotionEvent;
+import android.view.View;
 
 import org.mariotaku.twidere.util.MouseScrollDirectionDecider;
 
@@ -37,6 +39,7 @@ public class ExtendedRecyclerView extends RecyclerView {
     private final MouseScrollDirectionDecider mMouseScrollDirectionDecider;
     // This value is used when handling generic motion events.
     private float mScrollFactor = Float.MIN_VALUE;
+    private ContextMenuInfo mContextMenuInfo;
 
     public ExtendedRecyclerView(Context context) {
         this(context, null);
@@ -88,7 +91,7 @@ public class ExtendedRecyclerView extends RecyclerView {
                 } else {
                     hScroll = 0f;
                 }
-                if ((vScroll != 0 || hScroll != 0)) {
+                if (vScroll != 0 || hScroll != 0) {
                     final float scrollFactor = getScrollFactorBackport();
                     float horizontalDirection = mMouseScrollDirectionDecider.getHorizontalDirection();
                     float verticalDirection = mMouseScrollDirectionDecider.getVerticalDirection();
@@ -137,6 +140,22 @@ public class ExtendedRecyclerView extends RecyclerView {
         return super.computeVerticalScrollExtent();
     }
 
+    @Override
+    protected ContextMenu.ContextMenuInfo getContextMenuInfo() {
+        return mContextMenuInfo;
+    }
+
+    @Override
+    public boolean showContextMenuForChild(View originalView) {
+        if (originalView.getParent() != this) {
+            return false;
+        }
+        final int position = getChildLayoutPosition(originalView);
+        if (position == RecyclerView.NO_POSITION) return false;
+        mContextMenuInfo = new ContextMenuInfo(getId(), position);
+        return super.showContextMenuForChild(originalView);
+    }
+
     /**
      * Ported from View.getVerticalScrollFactor.
      */
@@ -153,6 +172,24 @@ public class ExtendedRecyclerView extends RecyclerView {
 
         }
         return mScrollFactor;
+    }
+
+    public static class ContextMenuInfo implements ContextMenu.ContextMenuInfo {
+        private final int recyclerViewId;
+        private final int position;
+
+        public ContextMenuInfo(int recyclerViewId, int position) {
+            this.recyclerViewId = recyclerViewId;
+            this.position = position;
+        }
+
+        public int getRecyclerViewId() {
+            return recyclerViewId;
+        }
+
+        public int getPosition() {
+            return position;
+        }
     }
 
 }

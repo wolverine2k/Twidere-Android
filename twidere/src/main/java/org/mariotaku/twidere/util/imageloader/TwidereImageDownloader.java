@@ -27,7 +27,6 @@ import com.nostra13.universalimageloader.core.download.BaseImageDownloader;
 
 import org.mariotaku.mediaviewer.library.CacheDownloadLoader;
 import org.mariotaku.mediaviewer.library.MediaDownloader;
-import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
 import org.mariotaku.twidere.util.TwidereLinkify;
 import org.mariotaku.twidere.util.Utils;
@@ -37,7 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
 
-public class TwidereImageDownloader extends BaseImageDownloader implements Constants {
+public class TwidereImageDownloader extends BaseImageDownloader {
 
     private final MediaDownloader mMediaDownloader;
     private final String mTwitterProfileImageSize;
@@ -49,14 +48,13 @@ public class TwidereImageDownloader extends BaseImageDownloader implements Const
     }
 
     @Override
-    protected InputStream getStreamFromNetwork(final String uriString, final Object extras) throws IOException {
+    protected InputStream getStreamFromNetwork(String uriString, final Object extras) throws IOException {
         if (uriString == null) return null;
         try {
             if (isTwitterProfileImage(uriString)) {
-                final String replaced = Utils.getTwitterProfileImageOfSize(uriString, mTwitterProfileImageSize);
-                return getStreamFromNetworkInternal(replaced, extras);
-            } else
-                return getStreamFromNetworkInternal(uriString, extras);
+                uriString = Utils.getTwitterProfileImageOfSize(uriString, mTwitterProfileImageSize);
+            }
+            return getStreamFromNetworkInternal(uriString, extras);
         } catch (final FileNotFoundException e) {
             if (isTwitterProfileImage(uriString) && !uriString.contains("_normal.")) {
                 return getStreamFromNetworkInternal(Utils.getNormalTwitterProfileImage(uriString), extras);

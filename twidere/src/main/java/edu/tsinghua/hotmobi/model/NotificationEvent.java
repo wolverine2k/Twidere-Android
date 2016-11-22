@@ -31,6 +31,8 @@ import com.bluelinelabs.logansquare.annotation.JsonObject;
 import com.hannesdorfmann.parcelableplease.annotation.ParcelablePlease;
 import com.hannesdorfmann.parcelableplease.annotation.ParcelableThisPlease;
 
+import org.mariotaku.twidere.model.UserKey;
+
 import java.util.TimeZone;
 
 import edu.tsinghua.hotmobi.util.LocationUtils;
@@ -52,7 +54,7 @@ public class NotificationEvent extends BaseEvent implements Parcelable {
 
     @JsonField(name = "account_id")
     @ParcelableThisPlease
-    long accountId;
+    String accountId;
 
     @JsonField(name = "type")
     @ParcelableThisPlease
@@ -73,8 +75,8 @@ public class NotificationEvent extends BaseEvent implements Parcelable {
     public NotificationEvent() {
     }
 
-    public static NotificationEvent create(Context context, @Action String action, long postTime,
-                                           long respondTime, String type, long accountId, long itemId,
+    public static NotificationEvent create(@NonNull  Context context, @Action String action, long postTime,
+                                           long respondTime, String type, String accountId, long itemId,
                                            long itemUserId, boolean itemUserFollowing) {
         final NotificationEvent event = new NotificationEvent();
         event.setAction(action);
@@ -91,14 +93,14 @@ public class NotificationEvent extends BaseEvent implements Parcelable {
         return event;
     }
 
-    public static NotificationEvent deleted(Context context, long postTime, String type,
-                                            long accountId, long itemId, long itemUserId,
+    public static NotificationEvent deleted(@NonNull  Context context, long postTime, String type,
+                                            UserKey accountKey, long itemId, long itemUserId,
                                             boolean itemUserFollowing) {
-        return create(context, Action.DELETE, System.currentTimeMillis(), postTime, type, accountId,
+        return create(context, Action.DELETE, System.currentTimeMillis(), postTime, type, accountKey.getId(),
                 itemId, itemUserId, itemUserFollowing);
     }
 
-    public static NotificationEvent open(Context context, long postTime, String type, long accountId,
+    public static NotificationEvent open(@NonNull  Context context, long postTime, String type, String accountId,
                                          long itemId, long itemUserId, boolean itemUserFollowing) {
         return create(context, Action.OPEN, System.currentTimeMillis(), postTime, type, accountId,
                 itemId, itemUserId, itemUserFollowing);
@@ -137,11 +139,11 @@ public class NotificationEvent extends BaseEvent implements Parcelable {
         this.itemId = itemId;
     }
 
-    public long getAccountId() {
+    public String getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(long accountId) {
+    public void setAccountId(String accountId) {
         this.accountId = accountId;
     }
 

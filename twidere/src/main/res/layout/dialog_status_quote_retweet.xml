@@ -67,7 +67,7 @@
                 android:paddingRight="@dimen/element_spacing_normal"
                 tools:text="140"/>
 
-            <org.mariotaku.twidere.view.ActionIconButton
+            <org.mariotaku.twidere.view.IconActionButton
                 android:id="@+id/comment_menu"
                 style="?cardActionButtonStyle"
                 android:layout_width="@dimen/element_size_normal"
@@ -80,7 +80,7 @@
                 android:src="@drawable/ic_action_more_vertical"/>
         </RelativeLayout>
 
-        <include layout="@layout/card_item_status_common"/>
+        <include layout="@layout/list_item_status"/>
     </LinearLayout>
 
 </ScrollView>

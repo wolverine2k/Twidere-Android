@@ -24,6 +24,7 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.support.annotation.Nullable;
 import android.support.v4.text.BidiFormatter;
+import android.support.v7.widget.AppCompatTextView;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -34,12 +35,13 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.view.themed.ThemedTextView;
+import org.mariotaku.twidere.text.util.SafeEditableFactory;
+import org.mariotaku.twidere.text.util.SafeSpannableFactory;
 
 /**
  * Created by mariotaku on 15/5/28.
  */
-public class NameView extends ThemedTextView {
+public class NameView extends AppCompatTextView {
 
     private boolean mNameFirst;
     private boolean mTwoLine;
@@ -60,16 +62,13 @@ public class NameView extends ThemedTextView {
 
     public NameView(final Context context, final AttributeSet attrs, final int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        setSpannableFactory(new SafeSpannableFactory());
+        setEditableFactory(new SafeEditableFactory());
         setEllipsize(TextUtils.TruncateAt.END);
         final TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.NameView, defStyleAttr, 0);
         setPrimaryTextColor(a.getColor(R.styleable.NameView_nv_primaryTextColor, 0));
         setSecondaryTextColor(a.getColor(R.styleable.NameView_nv_secondaryTextColor, 0));
-        if (mTwoLine = a.getBoolean(R.styleable.NameView_nv_twoLine, false)) {
-            setSingleLine(false);
-            setMaxLines(2);
-        } else {
-            setSingleLine(true);
-        }
+        setTwoLine(a.getBoolean(R.styleable.NameView_nv_twoLine, false));
         mPrimaryTextStyle = new StyleSpan(a.getInt(R.styleable.NameView_nv_primaryTextStyle, 0));
         mSecondaryTextStyle = new StyleSpan(a.getInt(R.styleable.NameView_nv_secondaryTextStyle, 0));
         a.recycle();
@@ -154,6 +153,16 @@ public class NameView extends ThemedTextView {
 
     public void setSecondaryTextSize(final float textSize) {
         mSecondaryTextSize = new AbsoluteSizeSpan((int) calculateTextSize(TypedValue.COMPLEX_UNIT_SP, textSize));
+    }
+
+    public void setTwoLine(boolean twoLine) {
+        mTwoLine = twoLine;
+        if (twoLine) {
+            setSingleLine(false);
+            setMaxLines(2);
+        } else {
+            setSingleLine(true);
+        }
     }
 
 }

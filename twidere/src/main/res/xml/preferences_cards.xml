@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--suppress AndroidElementNotAllowed -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -22,28 +23,41 @@
         app:min="12"
         app:progressTextSuffix="sp">
         <extra
-            android:name="notify_change"
+            android:name="should_recreate"
             android:value="true"/>
     </org.mariotaku.twidere.preference.SeekBarDialogPreference>
 
-    <org.mariotaku.twidere.preference.AutoFixSwitchPreference
+    <SwitchPreferenceCompat
         android:defaultValue="true"
         android:key="display_profile_image"
         android:order="23"
         android:title="@string/profile_image">
         <extra
-            android:name="notify_change"
+            android:name="should_recreate"
             android:value="true"/>
-    </org.mariotaku.twidere.preference.AutoFixSwitchPreference>
-    <org.mariotaku.twidere.preference.AutoFixSwitchPreference
+    </SwitchPreferenceCompat>
+
+    <org.mariotaku.twidere.preference.EntrySummaryListPreference
+        android:defaultValue="@string/default_profile_image_style"
+        android:entries="@array/entries_profile_image_style"
+        android:entryValues="@array/values_profile_image_style"
+        android:key="profile_image_style"
+        android:order="24"
+        android:title="@string/profile_image_style">
+        <extra
+            android:name="should_recreate"
+            android:value="true"/>
+    </org.mariotaku.twidere.preference.EntrySummaryListPreference>
+
+    <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="media_preview"
         android:order="25"
         android:title="@string/media_preview">
         <extra
-            android:name="notify_change"
+            android:name="should_recreate"
             android:value="true"/>
-    </org.mariotaku.twidere.preference.AutoFixSwitchPreference>
+    </SwitchPreferenceCompat>
 
     <org.mariotaku.twidere.preference.LinkHighlightPreference
         android:defaultValue="none"
@@ -51,39 +65,29 @@
         android:order="27"
         android:title="@string/link_highlight_option">
         <extra
-            android:name="notify_change"
+            android:name="should_recreate"
             android:value="true"/>
     </org.mariotaku.twidere.preference.LinkHighlightPreference>
 
-    <org.mariotaku.twidere.preference.AutoFixSwitchPreference
-        android:defaultValue="false"
-        android:key="compact_cards"
-        android:order="32"
-        android:summary="@string/compact_cards_summary"
-        android:title="@string/compact_cards">
-        <extra
-            android:name="notify_change"
-            android:value="true"/>
-    </org.mariotaku.twidere.preference.AutoFixSwitchPreference>
-    <org.mariotaku.twidere.preference.AutoFixSwitchPreference
+    <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="hide_card_actions"
         android:order="33"
         android:title="@string/hide_card_actions">
         <extra
-            android:name="notify_change"
+            android:name="should_recreate"
             android:value="true"/>
-    </org.mariotaku.twidere.preference.AutoFixSwitchPreference>
+    </SwitchPreferenceCompat>
 
-    <org.mariotaku.twidere.preference.AutoFixCheckBoxPreference
+    <SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="i_want_my_stars_back"
         android:order="34"
         android:summary="@string/i_want_my_stars_back_summary"
         android:title="@string/i_want_my_stars_back">
         <extra
-            android:name="notify_change"
+            android:name="should_recreate"
             android:value="true"/>
-    </org.mariotaku.twidere.preference.AutoFixCheckBoxPreference>
+    </SwitchPreferenceCompat>
 
 </PreferenceScreen>

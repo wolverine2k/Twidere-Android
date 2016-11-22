@@ -26,13 +26,16 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.util.Log;
 
-import org.mariotaku.twidere.Constants;
-
 import java.util.HashMap;
 
-public final class ServiceUtils implements Constants {
+import static org.mariotaku.twidere.TwidereConstants.LOGTAG;
+
+public final class ServiceUtils {
 
     private static HashMap<Context, ServiceUtils.ServiceBinder> sConnectionMap = new HashMap<>();
+
+    private ServiceUtils() {
+    }
 
     public static ServiceToken bindToService(final Context context, final Intent intent) {
         return bindToService(context, intent, null);

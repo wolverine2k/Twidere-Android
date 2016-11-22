@@ -42,13 +42,16 @@ public class TweetEvent extends BaseEvent implements Parcelable {
 
     @ParcelableThisPlease
     @JsonField(name = "id")
-    long id;
+    String id;
     @ParcelableThisPlease
     @JsonField(name = "account_id")
-    long accountId;
+    String accountId;
+    @ParcelableThisPlease
+    @JsonField(name = "account_host")
+    String accountHost;
     @ParcelableThisPlease
     @JsonField(name = "user_id")
-    long userId;
+    String userId;
     @ParcelableThisPlease
     @JsonField(name = "tweet_type")
     @TweetType
@@ -80,8 +83,9 @@ public class TweetEvent extends BaseEvent implements Parcelable {
         final TweetEvent event = new TweetEvent();
         event.markStart(context);
         event.setId(status.id);
-        event.setAccountId(status.account_id);
-        event.setUserId(status.user_id);
+        event.setAccountId(status.account_key.getId());
+        event.setAccountHost(status.account_key.getHost());
+        event.setUserId(status.user_key.getId());
         event.setTimelineType(timelineType);
         event.setTweetType(TwidereDataUtils.getTweetType(status));
         event.setFollowing(status.user_is_following);
@@ -96,11 +100,11 @@ public class TweetEvent extends BaseEvent implements Parcelable {
         this.action = action;
     }
 
-    public void setId(long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public void setUserId(long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 
@@ -112,23 +116,32 @@ public class TweetEvent extends BaseEvent implements Parcelable {
         this.timelineType = timelineType;
     }
 
-    public long getAccountId() {
+    public String getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(long accountId) {
-        this.accountId = accountId;
+    public void setAccountId(String accountKey) {
+        this.accountId = accountKey;
+    }
+
+    public String getAccountHost() {
+        return accountHost;
+    }
+
+    public void setAccountHost(String accountHost) {
+        this.accountHost = accountHost;
     }
 
     @Override
     public String toString() {
         return "TweetEvent{" +
                 "id=" + id +
-                ", accountId=" + accountId +
+                ", accountKey=" + accountId +
                 ", userId=" + userId +
-                ", tweetType=" + tweetType +
-                ", timelineType=" + timelineType +
-                ", action=" + action +
+                ", tweetType='" + tweetType + '\'' +
+                ", timelineType='" + timelineType + '\'' +
+                ", action='" + action + '\'' +
+                ", following=" + following +
                 "} " + super.toString();
     }
 

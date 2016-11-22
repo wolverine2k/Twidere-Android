@@ -28,16 +28,15 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
 import org.mariotaku.twidere.util.KeyboardShortcutsHandler;
 import org.mariotaku.twidere.util.KeyboardShortcutsHandler.KeyboardShortcutSpec;
-import org.mariotaku.twidere.util.ThemeUtils;
 
 /**
  * Created by mariotaku on 15/4/20.
  */
-public class KeyboardShortcutPreferenceCompatActivity extends BaseThemedActivity implements Constants, OnClickListener {
+public class KeyboardShortcutPreferenceCompatActivity extends BaseActivity implements
+        OnClickListener {
 
     public static final String EXTRA_CONTEXT_TAG = "context_tag";
     public static final String EXTRA_KEY_ACTION = "key_action";
@@ -48,19 +47,10 @@ public class KeyboardShortcutPreferenceCompatActivity extends BaseThemedActivity
     private Button mButtonPositive, mButtonNegative, mButtonNeutral;
     private int mMetaState;
 
+    @NonNull
     @Override
     public String getThemeBackgroundOption() {
         return VALUE_THEME_BACKGROUND_DEFAULT;
-    }
-
-    @Override
-    public int getThemeColor() {
-        return ThemeUtils.getThemeColor(this);
-    }
-
-    @Override
-    public int getThemeResourceId() {
-        return ThemeUtils.getDialogThemeResource(this);
     }
 
     @Override
@@ -79,12 +69,12 @@ public class KeyboardShortcutPreferenceCompatActivity extends BaseThemedActivity
         switch (v.getId()) {
             case R.id.button_positive: {
                 if (mKeySpec == null) return;
-                mKeyboardShortcutHandler.register(mKeySpec, getKeyAction());
+                keyboardShortcutsHandler.register(mKeySpec, getKeyAction());
                 finish();
                 break;
             }
             case R.id.button_neutral: {
-                mKeyboardShortcutHandler.unregister(getKeyAction());
+                keyboardShortcutsHandler.unregister(getKeyAction());
                 finish();
                 break;
             }
@@ -117,15 +107,16 @@ public class KeyboardShortcutPreferenceCompatActivity extends BaseThemedActivity
         }
         mKeySpec = spec;
         mKeysLabel.setText(spec.toKeyString());
-        final String oldAction = mKeyboardShortcutHandler.findAction(spec);
+        final String oldAction = keyboardShortcutsHandler.findAction(spec);
         final KeyboardShortcutSpec copyOfSpec = spec.copy();
         copyOfSpec.setContextTag(null);
-        final String oldGeneralAction = mKeyboardShortcutHandler.findAction(copyOfSpec);
+        final String oldGeneralAction = keyboardShortcutsHandler.findAction(copyOfSpec);
         if (!TextUtils.isEmpty(oldAction) && !keyAction.equals(oldAction)) {
             // Conflicts with keys in same context tag
             mConflictLabel.setVisibility(View.VISIBLE);
             final String label = KeyboardShortcutsHandler.getActionLabel(this, oldAction);
             mConflictLabel.setText(getString(R.string.conflicts_with_name, label));
+            //noinspection UnnecessaryParentheses
             mButtonPositive.setText((R.string.overwrite));
         } else if (!TextUtils.isEmpty(oldGeneralAction) && !keyAction.equals(oldGeneralAction)) {
             // Conflicts with keys in root context
@@ -135,7 +126,7 @@ public class KeyboardShortcutPreferenceCompatActivity extends BaseThemedActivity
             mButtonPositive.setText((R.string.overwrite));
         } else {
             mConflictLabel.setVisibility(View.GONE);
-            mButtonPositive.setText((android.R.string.ok));
+            mButtonPositive.setText(android.R.string.ok);
         }
         return true;
     }

@@ -12,9 +12,19 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.util.LongSparseArray;
+import android.support.v4.util.SimpleArrayMap;
+import android.text.TextUtils;
 import android.util.Log;
 
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.TwitterUserStream;
+import org.mariotaku.microblog.library.twitter.UserStreamCallback;
+import org.mariotaku.microblog.library.twitter.model.DeletionEvent;
+import org.mariotaku.microblog.library.twitter.model.DirectMessage;
+import org.mariotaku.microblog.library.twitter.model.Status;
+import org.mariotaku.microblog.library.twitter.model.User;
+import org.mariotaku.microblog.library.twitter.model.UserList;
+import org.mariotaku.microblog.library.twitter.model.Warning;
 import org.mariotaku.restfu.http.Authorization;
 import org.mariotaku.restfu.http.ContentType;
 import org.mariotaku.restfu.http.Endpoint;
@@ -25,18 +35,11 @@ import org.mariotaku.twidere.BuildConfig;
 import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
 import org.mariotaku.twidere.activity.SettingsActivity;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.TwitterUserStream;
-import org.mariotaku.twidere.api.twitter.UserStreamCallback;
-import org.mariotaku.twidere.api.twitter.model.DirectMessage;
-import org.mariotaku.twidere.api.twitter.model.Status;
-import org.mariotaku.twidere.api.twitter.model.StatusDeletionNotice;
-import org.mariotaku.twidere.api.twitter.model.User;
-import org.mariotaku.twidere.api.twitter.model.UserList;
-import org.mariotaku.twidere.api.twitter.model.Warning;
 import org.mariotaku.twidere.model.AccountPreferences;
 import org.mariotaku.twidere.model.ParcelableAccount;
 import org.mariotaku.twidere.model.ParcelableCredentials;
+import org.mariotaku.twidere.model.UserKey;
+import org.mariotaku.twidere.provider.TwidereDataStore.AccountSupportColumns;
 import org.mariotaku.twidere.provider.TwidereDataStore.Accounts;
 import org.mariotaku.twidere.provider.TwidereDataStore.Activities;
 import org.mariotaku.twidere.provider.TwidereDataStore.DirectMessages;
@@ -44,9 +47,8 @@ import org.mariotaku.twidere.provider.TwidereDataStore.Mentions;
 import org.mariotaku.twidere.provider.TwidereDataStore.Statuses;
 import org.mariotaku.twidere.util.ContentValuesCreator;
 import org.mariotaku.twidere.util.DataStoreUtils;
-import org.mariotaku.twidere.util.DebugModeUtils;
+import org.mariotaku.twidere.util.MicroBlogAPIFactory;
 import org.mariotaku.twidere.util.TwidereArrayUtils;
-import org.mariotaku.twidere.util.TwitterAPIFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -57,12 +59,12 @@ public class StreamingService extends Service implements Constants {
 
     private static final int NOTIFICATION_SERVICE_STARTED = 1;
 
-    private final LongSparseArray<UserStreamCallback> mCallbacks = new LongSparseArray<>();
+    private final SimpleArrayMap<UserKey, UserStreamCallback> mCallbacks = new SimpleArrayMap<>();
     private ContentResolver mResolver;
 
     private NotificationManager mNotificationManager;
 
-    private long[] mAccountIds;
+    private UserKey[] mAccountKeys;
 
     private static final Uri[] MESSAGES_URIS = new Uri[]{DirectMessages.Inbox.CONTENT_URI,
             DirectMessages.Outbox.CONTENT_URI};
@@ -76,7 +78,7 @@ public class StreamingService extends Service implements Constants {
 
         @Override
         public void onChange(final boolean selfChange, final Uri uri) {
-            if (!TwidereArrayUtils.contentMatch(mAccountIds, DataStoreUtils.getActivatedAccountIds(StreamingService.this))) {
+            if (!TwidereArrayUtils.contentMatch(mAccountKeys, DataStoreUtils.getActivatedAccountKeys(StreamingService.this))) {
                 initStreaming();
             }
         }
@@ -126,33 +128,34 @@ public class StreamingService extends Service implements Constants {
     }
 
     private boolean setTwitterInstances() {
-        final List<ParcelableCredentials> accountsList = ParcelableAccount.getCredentialsList(this, true);
-        final long[] accountIds = new long[accountsList.size()];
-        for (int i = 0, j = accountIds.length; i < j; i++) {
-            accountIds[i] = accountsList.get(i).account_id;
+        final List<ParcelableCredentials> accountsList = DataStoreUtils.getCredentialsList(this, true);
+        final UserKey[] accountKeys = new UserKey[accountsList.size()];
+        for (int i = 0, j = accountKeys.length; i < j; i++) {
+            final ParcelableCredentials credentials = accountsList.get(i);
+            accountKeys[i] = credentials.account_key;
         }
-        final AccountPreferences[] activitedPreferences = AccountPreferences.getAccountPreferences(this, accountIds);
+        final AccountPreferences[] activatedPreferences = AccountPreferences.getAccountPreferences(this, accountKeys);
         if (BuildConfig.DEBUG) {
             Log.d(Constants.LOGTAG, "Setting up twitter stream instances");
         }
-        mAccountIds = accountIds;
+        mAccountKeys = accountKeys;
         clearTwitterInstances();
         boolean result = false;
         for (int i = 0, j = accountsList.size(); i < j; i++) {
-            final AccountPreferences preferences = activitedPreferences[i];
+            final AccountPreferences preferences = activatedPreferences[i];
             if (!preferences.isStreamingEnabled()) continue;
             final ParcelableCredentials account = accountsList.get(i);
-            final Endpoint endpoint = TwitterAPIFactory.getEndpoint(account, TwitterUserStream.class);
-            final Authorization authorization = TwitterAPIFactory.getAuthorization(account);
-            final TwitterUserStream twitter = TwitterAPIFactory.getInstance(this, endpoint, authorization, TwitterUserStream.class);
+            final Endpoint endpoint = MicroBlogAPIFactory.getEndpoint(account, TwitterUserStream.class);
+            final Authorization authorization = MicroBlogAPIFactory.getAuthorization(account);
+            final TwitterUserStream twitter = MicroBlogAPIFactory.getInstance(this, endpoint, authorization, TwitterUserStream.class);
             final TwidereUserStreamCallback callback = new TwidereUserStreamCallback(this, account);
-            mCallbacks.put(account.account_id, callback);
+            mCallbacks.put(account.account_key, callback);
             new Thread() {
                 @Override
                 public void run() {
                     twitter.getUserStream(callback);
-                    Log.d(Constants.LOGTAG, String.format("Stream %d disconnected", account.account_id));
-                    mCallbacks.remove(account.account_id);
+                    Log.d(Constants.LOGTAG, String.format("Stream %s disconnected", account.account_key));
+                    mCallbacks.remove(account.account_key);
                     updateStreamState();
                 }
             }.start();
@@ -222,39 +225,43 @@ public class StreamingService extends Service implements Constants {
         }
 
         @Override
-        public void onDeletionNotice(final long directMessageId, final long userId) {
-            final String where = DirectMessages.MESSAGE_ID + " = " + directMessageId;
+        public void onDirectMessageDeleted(final DeletionEvent event) {
+            final String where = Expression.equalsArgs(DirectMessages.MESSAGE_ID).getSQL();
+            final String[] whereArgs = {event.getId()};
             for (final Uri uri : MESSAGES_URIS) {
-                resolver.delete(uri, where, null);
+                resolver.delete(uri, where, whereArgs);
             }
         }
 
         @Override
-        public void onDeletionNotice(final StatusDeletionNotice statusDeletionNotice) {
-            final long statusId = statusDeletionNotice.getStatusId();
-            resolver.delete(Statuses.CONTENT_URI, Expression.equals(Statuses.STATUS_ID, statusId).getSQL(), null);
-            resolver.delete(Activities.AboutMe.CONTENT_URI, Expression.equals(Activities.AboutMe.STATUS_ID, statusId).getSQL(), null);
+        public void onStatusDeleted(final DeletionEvent event) {
+            final String statusId = event.getId();
+            resolver.delete(Statuses.CONTENT_URI, Expression.equalsArgs(Statuses.STATUS_ID).getSQL(),
+                    new String[]{statusId});
+            resolver.delete(Activities.AboutMe.CONTENT_URI, Expression.equalsArgs(Activities.STATUS_ID).getSQL(),
+                    new String[]{statusId});
         }
 
         @Override
         public void onDirectMessage(final DirectMessage directMessage) {
-            if (directMessage == null || directMessage.getId() <= 0) return;
+            if (directMessage == null || directMessage.getId() == null) return;
+            final String where = Expression.and(Expression.equalsArgs(DirectMessages.ACCOUNT_KEY),
+                    Expression.equalsArgs(DirectMessages.MESSAGE_ID)).getSQL();
+            final String[] whereArgs = {account.account_key.toString(), directMessage.getId()};
             for (final Uri uri : MESSAGES_URIS) {
-                final String where = DirectMessages.ACCOUNT_ID + " = " + account.account_id + " AND "
-                        + DirectMessages.MESSAGE_ID + " = " + directMessage.getId();
-                resolver.delete(uri, where, null);
+                resolver.delete(uri, where, whereArgs);
             }
             final User sender = directMessage.getSender(), recipient = directMessage.getRecipient();
-            if (sender.getId() == account.account_id) {
+            if (TextUtils.equals(sender.getId(), account.account_key.getId())) {
                 final ContentValues values = ContentValuesCreator.createDirectMessage(directMessage,
-                        account.account_id, true);
+                        account.account_key, true);
                 if (values != null) {
                     resolver.insert(DirectMessages.Outbox.CONTENT_URI, values);
                 }
             }
-            if (recipient.getId() == account.account_id) {
+            if (TextUtils.equals(recipient.getId(), account.account_key.getId())) {
                 final ContentValues values = ContentValuesCreator.createDirectMessage(directMessage,
-                        account.account_id, false);
+                        account.account_key, false);
                 final Uri.Builder builder = DirectMessages.Inbox.CONTENT_URI.buildUpon();
                 builder.appendQueryParameter(QUERY_PARAM_NOTIFY, "true");
                 if (values != null) {
@@ -266,9 +273,9 @@ public class StreamingService extends Service implements Constants {
 
         @Override
         public void onException(final Throwable ex) {
-            if (ex instanceof TwitterException) {
-                Log.w(LOGTAG, String.format("Error %d", ((TwitterException) ex).getStatusCode()), ex);
-                final HttpResponse response = ((TwitterException) ex).getHttpResponse();
+            if (ex instanceof MicroBlogException) {
+                Log.w(LOGTAG, String.format("Error %d", ((MicroBlogException) ex).getStatusCode()), ex);
+                final HttpResponse response = ((MicroBlogException) ex).getHttpResponse();
                 if (response != null) {
                     try {
                         final Body body = response.getBody();
@@ -299,9 +306,9 @@ public class StreamingService extends Service implements Constants {
         }
 
         @Override
-        public void onFavorite(final User source, final User target, final Status favoritedStatus) {
+        public void onFavorite(final User source, final User target, final Status targetStatus) {
             final String message = String.format("%s favorited %s's tweet: %s", source.getScreenName(),
-                    target.getScreenName(), favoritedStatus.getText());
+                    target.getScreenName(), targetStatus.getExtendedText());
             Log.d(LOGTAG, message);
         }
 
@@ -319,11 +326,12 @@ public class StreamingService extends Service implements Constants {
 
         @Override
         public void onScrubGeo(final long userId, final long upToStatusId) {
-            final String where = Statuses.USER_ID + " = " + userId + " AND " + Statuses.STATUS_ID + " >= "
-                    + upToStatusId;
+            final String where = Expression.and(Expression.equalsArgs(Statuses.USER_KEY),
+                    Expression.greaterEqualsArgs(Statuses.SORT_ID)).getSQL();
+            final String[] whereArgs = {String.valueOf(userId), String.valueOf(upToStatusId)};
             final ContentValues values = new ContentValues();
             values.putNull(Statuses.LOCATION);
-            resolver.update(Statuses.CONTENT_URI, values, where, null);
+            resolver.update(Statuses.CONTENT_URI, values, where, whereArgs);
         }
 
         @Override
@@ -333,19 +341,20 @@ public class StreamingService extends Service implements Constants {
 
         @Override
         public void onStatus(final Status status) {
-            final ContentValues values = ContentValuesCreator.createStatus(status, account.account_id);
+            final ContentValues values = ContentValuesCreator.createStatus(status, account.account_key);
             if (!statusStreamStarted) {
                 statusStreamStarted = true;
                 values.put(Statuses.IS_GAP, true);
             }
-            final String where = Statuses.ACCOUNT_ID + " = " + account.account_id + " AND " + Statuses.STATUS_ID + " = "
-                    + status.getId();
-            resolver.delete(Statuses.CONTENT_URI, where, null);
-            resolver.delete(Mentions.CONTENT_URI, where, null);
+            final String where = Expression.and(Expression.equalsArgs(AccountSupportColumns.ACCOUNT_KEY),
+                    Expression.equalsArgs(Statuses.STATUS_ID)).getSQL();
+            final String[] whereArgs = {account.account_key.toString(), String.valueOf(status.getId())};
+            resolver.delete(Statuses.CONTENT_URI, where, whereArgs);
+            resolver.delete(Mentions.CONTENT_URI, where, whereArgs);
             resolver.insert(Statuses.CONTENT_URI, values);
             final Status rt = status.getRetweetedStatus();
-            if (rt != null && rt.getText().contains("@" + account.screen_name) || rt == null
-                    && status.getText().contains("@" + account.screen_name)) {
+            if (rt != null && rt.getExtendedText().contains("@" + account.screen_name) || rt == null
+                    && status.getExtendedText().contains("@" + account.screen_name)) {
                 resolver.insert(Mentions.CONTENT_URI, values);
             }
         }
@@ -363,9 +372,9 @@ public class StreamingService extends Service implements Constants {
         }
 
         @Override
-        public void onUnfavorite(final User source, final User target, final Status unfavoritedStatus) {
+        public void onUnfavorite(final User source, final User target, final Status targetStatus) {
             final String message = String.format("%s unfavorited %s's tweet: %s", source.getScreenName(),
-                    target.getScreenName(), unfavoritedStatus.getText());
+                    target.getScreenName(), targetStatus.getExtendedText());
             Log.d(LOGTAG, message);
         }
 

@@ -22,6 +22,7 @@ package org.mariotaku.twidere.view.holder;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Typeface;
+import android.support.annotation.UiThread;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -30,10 +31,11 @@ import android.widget.TextView;
 
 import org.mariotaku.twidere.R;
 import org.mariotaku.twidere.adapter.MessageEntriesAdapter;
+import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.provider.TwidereDataStore.DirectMessages.ConversationEntries;
-import org.mariotaku.twidere.util.DataStoreUtils;
 import org.mariotaku.twidere.util.MediaLoaderWrapper;
 import org.mariotaku.twidere.util.UserColorNameManager;
+import org.mariotaku.twidere.view.NameView;
 import org.mariotaku.twidere.view.ShortTimeView;
 import org.mariotaku.twidere.view.iface.IColorLabelView;
 
@@ -41,8 +43,9 @@ import static org.mariotaku.twidere.util.HtmlEscapeHelper.toPlainText;
 
 public class MessageEntryViewHolder extends ViewHolder implements OnClickListener {
 
-    public final ImageView profileImageView;
-    public final TextView nameView, screenNameView, textView;
+    public final ImageView profileImage;
+    public final NameView nameView;
+    public final TextView textView;
     public final ShortTimeView timeView;
     private final MessageEntriesAdapter adapter;
     private final IColorLabelView content;
@@ -51,33 +54,34 @@ public class MessageEntryViewHolder extends ViewHolder implements OnClickListene
         super(itemView);
         this.adapter = adapter;
         content = (IColorLabelView) itemView.findViewById(R.id.content);
-        profileImageView = (ImageView) itemView.findViewById(R.id.profile_image);
-        nameView = (TextView) itemView.findViewById(R.id.name);
-        screenNameView = (TextView) itemView.findViewById(R.id.screen_name);
+        profileImage = (ImageView) itemView.findViewById(R.id.profileImage);
+        nameView = (NameView) itemView.findViewById(R.id.name);
         textView = (TextView) itemView.findViewById(R.id.text);
         timeView = (ShortTimeView) itemView.findViewById(R.id.time);
 
         setTextSize(adapter.getTextSize());
         itemView.setOnClickListener(this);
-        profileImageView.setOnClickListener(this);
+        profileImage.setOnClickListener(this);
     }
 
+    @UiThread
     public void displayMessage(Cursor cursor, boolean isUnread) {
         final Context context = adapter.getContext();
         final MediaLoaderWrapper loader = adapter.getMediaLoader();
         final UserColorNameManager manager = adapter.getUserColorNameManager();
 
-        final long accountId = cursor.getLong(ConversationEntries.IDX_ACCOUNT_ID);
-        final long conversationId = cursor.getLong(ConversationEntries.IDX_CONVERSATION_ID);
+        final UserKey accountKey = UserKey.valueOf(cursor.getString(ConversationEntries.IDX_ACCOUNT_KEY));
+        final UserKey conversationId = UserKey.valueOf(cursor.getString(ConversationEntries.IDX_CONVERSATION_ID));
         final long timestamp = cursor.getLong(ConversationEntries.IDX_MESSAGE_TIMESTAMP);
         final boolean isOutgoing = cursor.getInt(ConversationEntries.IDX_IS_OUTGOING) == 1;
 
         final String name = cursor.getString(ConversationEntries.IDX_NAME);
         final String screenName = cursor.getString(ConversationEntries.IDX_SCREEN_NAME);
 
-        nameView.setText(manager.getUserNickname(conversationId, name, false));
-        screenNameView.setText("@" + screenName);
-        textView.setText(toPlainText(cursor.getString(ConversationEntries.IDX_TEXT)));
+        nameView.setName(manager.getUserNickname(conversationId, name));
+        nameView.setScreenName("@" + screenName);
+        nameView.updateText(adapter.getBidiFormatter());
+        textView.setText(toPlainText(cursor.getString(ConversationEntries.IDX_TEXT_UNESCAPED)));
         timeView.setTime(timestamp);
         if (isOutgoing) {
             timeView.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_indicator_sent, 0);
@@ -85,23 +89,22 @@ public class MessageEntryViewHolder extends ViewHolder implements OnClickListene
             timeView.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
         }
         nameView.setTypeface(null, isUnread && !isOutgoing ? Typeface.BOLD : Typeface.NORMAL);
-        screenNameView.setTypeface(null, isUnread && !isOutgoing ? Typeface.BOLD : Typeface.NORMAL);
         textView.setTypeface(null, isUnread && !isOutgoing ? Typeface.BOLD : Typeface.NORMAL);
         if (adapter.shouldShowAccountsColor()) {
-            content.drawEnd(DataStoreUtils.getAccountColor(context, accountId));
+            // FIXME draw account color
         } else {
             content.drawEnd();
         }
-        content.drawStart(manager.getUserColor(conversationId, false));
+        content.drawStart(manager.getUserColor(conversationId));
 
         final String profileImage = cursor.getString(ConversationEntries.IDX_PROFILE_IMAGE_URL);
-        loader.displayProfileImage(profileImageView, profileImage);
+        loader.displayProfileImage(this.profileImage, profileImage);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.profile_image: {
+            case R.id.profileImage: {
                 adapter.onUserProfileClick(getLayoutPosition());
                 break;
             }
@@ -115,8 +118,8 @@ public class MessageEntryViewHolder extends ViewHolder implements OnClickListene
     }
 
     public void setTextSize(final float textSize) {
-        nameView.setTextSize(textSize * 1.1f);
-        screenNameView.setTextSize(textSize);
+        nameView.setPrimaryTextSize(textSize * 1.1f);
+        nameView.setSecondaryTextSize(textSize);
         textView.setTextSize(textSize);
         timeView.setTextSize(textSize * 0.85f);
     }

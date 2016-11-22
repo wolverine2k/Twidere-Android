@@ -19,45 +19,48 @@
 
 package org.mariotaku.twidere.model;
 
-import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
 import com.bluelinelabs.logansquare.annotation.JsonField;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
+import com.hannesdorfmann.parcelableplease.annotation.ParcelableNoThanks;
 import com.hannesdorfmann.parcelableplease.annotation.ParcelablePlease;
 import com.hannesdorfmann.parcelableplease.annotation.ParcelableThisPlease;
 
+import org.mariotaku.commons.objectcursor.LoganSquareCursorFieldConverter;
 import org.mariotaku.library.objectcursor.annotation.AfterCursorObjectCreated;
 import org.mariotaku.library.objectcursor.annotation.CursorField;
 import org.mariotaku.library.objectcursor.annotation.CursorObject;
-import org.mariotaku.twidere.api.twitter.model.UrlEntity;
-import org.mariotaku.twidere.api.twitter.model.User;
+import org.mariotaku.twidere.model.util.UserKeyConverter;
+import org.mariotaku.twidere.model.util.UserKeyCursorFieldConverter;
+import org.mariotaku.twidere.provider.TwidereDataStore;
 import org.mariotaku.twidere.provider.TwidereDataStore.CachedUsers;
-import org.mariotaku.twidere.provider.TwidereDataStore.DirectMessages.ConversationEntries;
-import org.mariotaku.twidere.util.HtmlEscapeHelper;
-import org.mariotaku.twidere.util.ParseUtils;
-import org.mariotaku.twidere.util.TwitterContentUtils;
+
+import java.util.Arrays;
 
 
 @ParcelablePlease(allFields = false)
 @JsonObject
-@CursorObject(valuesCreator = true)
+@CursorObject(valuesCreator = true, tableInfo = true)
 public class ParcelableUser implements Parcelable, Comparable<ParcelableUser> {
 
     @ParcelableThisPlease
-    @JsonField(name = "account_id")
-    public long account_id;
+    @JsonField(name = "account_id", typeConverter = UserKeyConverter.class)
+    public UserKey account_key;
 
     @ParcelableThisPlease
     public int account_color;
 
     @ParcelableThisPlease
-    @JsonField(name = "id")
-    @CursorField(CachedUsers.USER_ID)
-    public long id;
+    @CursorField(value = CachedUsers._ID, type = TwidereDataStore.TYPE_PRIMARY_KEY, excludeWrite = true)
+    public long _id;
+
+    @ParcelableThisPlease
+    @JsonField(name = "id", typeConverter = UserKeyConverter.class)
+    @CursorField(value = CachedUsers.USER_KEY, converter = UserKeyCursorFieldConverter.class)
+    public UserKey key;
     @ParcelableThisPlease
     @JsonField(name = "created_at")
     @CursorField(CachedUsers.CREATED_AT)
@@ -107,6 +110,10 @@ public class ParcelableUser implements Parcelable, Comparable<ParcelableUser> {
     @CursorField(CachedUsers.PROFILE_BANNER_URL)
     public String profile_banner_url;
     @ParcelableThisPlease
+    @JsonField(name = "profile_background_url")
+    @CursorField(CachedUsers.PROFILE_BACKGROUND_URL)
+    public String profile_background_url;
+    @ParcelableThisPlease
     @JsonField(name = "url")
     @CursorField(CachedUsers.URL)
     public String url;
@@ -115,41 +122,39 @@ public class ParcelableUser implements Parcelable, Comparable<ParcelableUser> {
     @CursorField(CachedUsers.URL_EXPANDED)
     public String url_expanded;
     @ParcelableThisPlease
-    @JsonField(name = "description_html")
-    @CursorField(CachedUsers.DESCRIPTION_HTML)
-    public String description_html;
-    @ParcelableThisPlease
     @JsonField(name = "description_unescaped")
+    @CursorField(CachedUsers.DESCRIPTION_UNESCAPED)
     public String description_unescaped;
+
     @ParcelableThisPlease
-    @JsonField(name = "description_expanded")
-    @CursorField(CachedUsers.DESCRIPTION_EXPANDED)
-    public String description_expanded;
+    @JsonField(name = "description_spans")
+    @CursorField(value = CachedUsers.DESCRIPTION_SPANS, converter = LoganSquareCursorFieldConverter.class)
+    public SpanItem[] description_spans;
 
     @ParcelableThisPlease
     @JsonField(name = "followers_count")
     @CursorField(CachedUsers.FOLLOWERS_COUNT)
-    public long followers_count;
+    public long followers_count = -1;
     @ParcelableThisPlease
     @JsonField(name = "friends_count")
     @CursorField(CachedUsers.FRIENDS_COUNT)
-    public long friends_count;
+    public long friends_count = -1;
     @ParcelableThisPlease
     @JsonField(name = "statuses_count")
     @CursorField(CachedUsers.STATUSES_COUNT)
-    public long statuses_count;
+    public long statuses_count = -1;
     @ParcelableThisPlease
     @JsonField(name = "favorites_count")
     @CursorField(CachedUsers.FAVORITES_COUNT)
-    public long favorites_count;
+    public long favorites_count = -1;
     @ParcelableThisPlease
     @JsonField(name = "listed_count")
     @CursorField(CachedUsers.LISTED_COUNT)
-    public long listed_count;
+    public long listed_count = -1;
     @ParcelableThisPlease
     @JsonField(name = "media_count")
     @CursorField(CachedUsers.MEDIA_COUNT)
-    public long media_count;
+    public long media_count = -1;
 
     @ParcelableThisPlease
     @JsonField(name = "background_color")
@@ -171,86 +176,60 @@ public class ParcelableUser implements Parcelable, Comparable<ParcelableUser> {
     @JsonField(name = "is_basic")
     public boolean is_basic;
 
+    @ParcelableThisPlease
+    @JsonField(name = "extras")
+    @CursorField(value = CachedUsers.EXTRAS, converter = LoganSquareCursorFieldConverter.class)
+    public Extras extras;
+
+    @ParcelableNoThanks
+    @CursorField(CachedUsers.LAST_SEEN)
+    public long last_seen;
+
+    @ParcelableNoThanks
+    @CursorField(value = CachedUsers.SCORE, excludeWrite = true)
+    public int score;
+
+    @ParcelableThisPlease
+    public int color;
+    @ParcelableThisPlease
+    public String nickname;
+
+    public static final Creator<ParcelableUser> CREATOR = new Creator<ParcelableUser>() {
+        @Override
+        public ParcelableUser createFromParcel(Parcel source) {
+            ParcelableUser target = new ParcelableUser();
+            ParcelableUserParcelablePlease.readFromParcel(target, source);
+            return target;
+        }
+
+        @Override
+        public ParcelableUser[] newArray(int size) {
+            return new ParcelableUser[size];
+        }
+    };
+
     public ParcelableUser() {
     }
 
-    public ParcelableUser(final long account_id, final long id, final String name,
-                          final String screen_name, final String profile_image_url) {
-        this.account_id = account_id;
-        this.id = id;
+    public ParcelableUser(final UserKey account_key, final UserKey key, final String name,
+                          final String screenName, final String profileImageUrl) {
+        this.account_key = account_key;
+        this.key = key;
         this.name = name;
-        this.screen_name = screen_name;
-        this.profile_image_url = profile_image_url;
-        this.created_at = 0;
-        this.position = 0;
-        is_protected = false;
-        is_verified = false;
-        is_follow_request_sent = false;
-        is_following = false;
-        description_plain = null;
-        location = null;
-        profile_banner_url = null;
-        url = null;
-        url_expanded = null;
-        description_html = null;
-        description_unescaped = null;
-        description_expanded = null;
-        followers_count = 0;
-        friends_count = 0;
-        statuses_count = 0;
-        favorites_count = 0;
-        listed_count = 0;
-        media_count = 0;
-        background_color = 0;
-        link_color = 0;
-        text_color = 0;
+        this.screen_name = screenName;
+        this.profile_image_url = profileImageUrl;
         is_cache = true;
         is_basic = true;
     }
 
+
     @AfterCursorObjectCreated
     void afterCursorObjectCreated() {
         is_cache = true;
-        description_unescaped = HtmlEscapeHelper.toPlainText(description_html);
+        if (description_unescaped == null) {
+            description_unescaped = description_plain;
+        }
         is_basic = description_plain == null || url == null || location == null;
-    }
-
-    public ParcelableUser(final User user, final long account_id) {
-        this(user, account_id, 0);
-    }
-
-    public ParcelableUser(final User user, final long account_id, final long position) {
-        this.position = position;
-        this.account_id = account_id;
-        final UrlEntity[] urls_url_entities = user.getUrlEntities();
-        id = user.getId();
-        created_at = user.getCreatedAt().getTime();
-        is_protected = user.isProtected();
-        is_verified = user.isVerified();
-        name = user.getName();
-        screen_name = user.getScreenName();
-        description_plain = user.getDescription();
-        description_html = TwitterContentUtils.formatUserDescription(user);
-        description_expanded = TwitterContentUtils.formatExpandedUserDescription(user);
-        description_unescaped = HtmlEscapeHelper.toPlainText(description_html);
-        location = user.getLocation();
-        profile_image_url = TwitterContentUtils.getProfileImageUrl(user);
-        profile_banner_url = user.getProfileBannerImageUrl();
-        url = user.getUrl();
-        url_expanded = url != null && urls_url_entities != null && urls_url_entities.length > 0 ? urls_url_entities[0].getExpandedUrl() : null;
-        is_follow_request_sent = user.isFollowRequestSent();
-        followers_count = user.getFollowersCount();
-        friends_count = user.getFriendsCount();
-        statuses_count = user.getStatusesCount();
-        favorites_count = user.getFavouritesCount();
-        listed_count = user.getListedCount();
-        media_count = user.getMediaCount();
-        is_following = user.isFollowing();
-        background_color = ParseUtils.parseColor("#" + user.getProfileBackgroundColor(), 0);
-        link_color = ParseUtils.parseColor("#" + user.getProfileLinkColor(), 0);
-        text_color = ParseUtils.parseColor("#" + user.getProfileTextColor(), 0);
-        is_cache = false;
-        is_basic = false;
     }
 
     @Override
@@ -261,68 +240,69 @@ public class ParcelableUser implements Parcelable, Comparable<ParcelableUser> {
         return (int) diff;
     }
 
-    public static ParcelableUser[] fromUsersArray(@Nullable final User[] users, long account_id) {
-        if (users == null) return null;
-        final ParcelableUser[] result = new ParcelableUser[users.length];
-        for (int i = 0, j = users.length; i < j; i++) {
-            result[i] = new ParcelableUser(users[i], account_id);
-        }
-        return result;
-    }
-
     @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (!(obj instanceof ParcelableUser)) return false;
-        final ParcelableUser other = (ParcelableUser) obj;
-        if (account_id != other.account_id) return false;
-        if (id != other.id) return false;
-        return true;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ParcelableUser user = (ParcelableUser) o;
+
+        if (account_key != null ? !account_key.equals(user.account_key) : user.account_key != null)
+            return false;
+        return key.equals(user.key);
+
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (int) (account_id ^ account_id >>> 32);
-        result = prime * result + (int) (id ^ id >>> 32);
+        return calculateHashCode(account_key, key);
+    }
+
+    public static int calculateHashCode(UserKey accountKey, UserKey key) {
+        int result = accountKey != null ? key.hashCode() : 0;
+        result = 31 * result + key.hashCode();
         return result;
     }
 
     @Override
     public String toString() {
-        return "ParcelableUser{account_id=" + account_id + ", id=" + id + ", created_at=" + created_at + ", position="
-                + position + ", is_protected=" + is_protected + ", is_verified=" + is_verified
-                + ", is_follow_request_sent=" + is_follow_request_sent + ", is_following=" + is_following
-                + ", description_plain=" + description_plain + ", name=" + name + ", screen_name=" + screen_name
-                + ", location=" + location + ", profile_image_url=" + profile_image_url + ", profile_banner_url="
-                + profile_banner_url + ", url=" + url + ", url_expanded=" + url_expanded + ", description_html="
-                + description_html + ", description_unescaped=" + description_unescaped + ", description_expanded="
-                + description_expanded + ", followers_count=" + followers_count + ", friends_count=" + friends_count
-                + ", statuses_count=" + statuses_count + ", favorites_count=" + favorites_count + ", is_cache="
-                + is_cache + "}";
+        return "ParcelableUser{" +
+                "account_key=" + account_key +
+                ", account_color=" + account_color +
+                ", key=" + key +
+                ", created_at=" + created_at +
+                ", position=" + position +
+                ", is_protected=" + is_protected +
+                ", is_verified=" + is_verified +
+                ", is_follow_request_sent=" + is_follow_request_sent +
+                ", is_following=" + is_following +
+                ", description_plain='" + description_plain + '\'' +
+                ", name='" + name + '\'' +
+                ", screen_name='" + screen_name + '\'' +
+                ", location='" + location + '\'' +
+                ", profile_image_url='" + profile_image_url + '\'' +
+                ", profile_banner_url='" + profile_banner_url + '\'' +
+                ", profile_background_url='" + profile_background_url + '\'' +
+                ", url='" + url + '\'' +
+                ", url_expanded='" + url_expanded + '\'' +
+                ", description_unescaped='" + description_unescaped + '\'' +
+                ", description_spans=" + Arrays.toString(description_spans) +
+                ", followers_count=" + followers_count +
+                ", friends_count=" + friends_count +
+                ", statuses_count=" + statuses_count +
+                ", favorites_count=" + favorites_count +
+                ", listed_count=" + listed_count +
+                ", media_count=" + media_count +
+                ", background_color=" + background_color +
+                ", link_color=" + link_color +
+                ", text_color=" + text_color +
+                ", is_cache=" + is_cache +
+                ", is_basic=" + is_basic +
+                ", extras=" + extras +
+                ", color=" + color +
+                ", nickname='" + nickname + '\'' +
+                '}';
     }
-
-    public static ParcelableUser fromDirectMessageConversationEntry(final Cursor cursor) {
-        final long account_id = cursor.getLong(ConversationEntries.IDX_ACCOUNT_ID);
-        final long id = cursor.getLong(ConversationEntries.IDX_CONVERSATION_ID);
-        final String name = cursor.getString(ConversationEntries.IDX_NAME);
-        final String screen_name = cursor.getString(ConversationEntries.IDX_SCREEN_NAME);
-        final String profile_image_url = cursor.getString(ConversationEntries.IDX_PROFILE_IMAGE_URL);
-        return new ParcelableUser(account_id, id, name, screen_name, profile_image_url);
-    }
-
-    public static ParcelableUser[] fromUsers(final User[] users, long accountId) {
-        if (users == null) return null;
-        int size = users.length;
-        final ParcelableUser[] result = new ParcelableUser[size];
-        for (int i = 0; i < size; i++) {
-            result[i] = new ParcelableUser(users[i], accountId);
-        }
-        return result;
-    }
-
 
     @Override
     public int describeContents() {
@@ -334,15 +314,84 @@ public class ParcelableUser implements Parcelable, Comparable<ParcelableUser> {
         ParcelableUserParcelablePlease.writeToParcel(this, dest, flags);
     }
 
-    public static final Creator<ParcelableUser> CREATOR = new Creator<ParcelableUser>() {
-        public ParcelableUser createFromParcel(Parcel source) {
-            ParcelableUser target = new ParcelableUser();
-            ParcelableUserParcelablePlease.readFromParcel(target, source);
-            return target;
+    @ParcelablePlease
+    @JsonObject
+    public static class Extras implements Parcelable {
+
+        @JsonField(name = "statusnet_profile_url")
+        @ParcelableThisPlease
+        public String statusnet_profile_url;
+        @JsonField(name = "ostatus_uri")
+        @ParcelableThisPlease
+        public String ostatus_uri;
+        @JsonField(name = "profile_image_url_original")
+        @ParcelableThisPlease
+        public String profile_image_url_original;
+        @JsonField(name = "profile_image_url_profile_size")
+        @ParcelableThisPlease
+        public String profile_image_url_profile_size;
+        @JsonField(name = "groups_count")
+        @ParcelableThisPlease
+        public long groups_count = -1;
+        @JsonField(name = "unique_id")
+        @ParcelableThisPlease
+        public String unique_id;
+        @JsonField(name = "blocking")
+        @ParcelableThisPlease
+        public boolean blocking;
+        @JsonField(name = "blocked_by")
+        @ParcelableThisPlease
+        public boolean blocked_by;
+        @JsonField(name = "followed_by")
+        @ParcelableThisPlease
+        public boolean followed_by;
+        @JsonField(name = "muting")
+        @ParcelableThisPlease
+        public boolean muting;
+        @JsonField(name = "pinned_status_ids")
+        @ParcelableThisPlease
+        public String[] pinned_status_ids;
+
+
+        @Override
+        public int describeContents() {
+            return 0;
         }
 
-        public ParcelableUser[] newArray(int size) {
-            return new ParcelableUser[size];
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            ParcelableUser$ExtrasParcelablePlease.writeToParcel(this, dest, flags);
         }
-    };
+
+        @Override
+        public String toString() {
+            return "Extras{" +
+                    "statusnet_profile_url='" + statusnet_profile_url + '\'' +
+                    ", ostatus_uri='" + ostatus_uri + '\'' +
+                    ", profile_image_url_original='" + profile_image_url_original + '\'' +
+                    ", profile_image_url_profile_size='" + profile_image_url_profile_size + '\'' +
+                    ", groups_count=" + groups_count +
+                    ", unique_id='" + unique_id + '\'' +
+                    ", blocking=" + blocking +
+                    ", blocked_by=" + blocked_by +
+                    ", followed_by=" + followed_by +
+                    ", muting=" + muting +
+                    ", pinned_status_ids=" + Arrays.toString(pinned_status_ids) +
+                    '}';
+        }
+
+        public static final Creator<Extras> CREATOR = new Creator<Extras>() {
+            @Override
+            public Extras createFromParcel(Parcel source) {
+                Extras target = new Extras();
+                ParcelableUser$ExtrasParcelablePlease.readFromParcel(target, source);
+                return target;
+            }
+
+            @Override
+            public Extras[] newArray(int size) {
+                return new Extras[size];
+            }
+        };
+    }
 }

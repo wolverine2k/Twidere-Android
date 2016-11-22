@@ -32,18 +32,20 @@ import edu.tsinghua.hotmobi.model.TweetType;
 
 public class TwidereDataUtils {
 
+    private TwidereDataUtils() {
+    }
+
     public static String getLinkType(int type) {
         switch (type) {
             case TwidereLinkify.LINK_TYPE_MENTION:
                 return "mention";
             case TwidereLinkify.LINK_TYPE_CASHTAG:
                 return "cashTag";
-            case TwidereLinkify.LINK_TYPE_LINK:
+            case TwidereLinkify.LINK_TYPE_LINK_IN_TEXT:
+            case TwidereLinkify.LINK_TYPE_ENTITY_URL:
                 return "urlLink";
             case TwidereLinkify.LINK_TYPE_LIST:
                 return "userList";
-            case TwidereLinkify.LINK_TYPE_STATUS:
-                return "status";
             case TwidereLinkify.LINK_TYPE_USER_ID:
                 return "userID";
             case TwidereLinkify.LINK_TYPE_HASHTAG:
@@ -56,15 +58,15 @@ public class TwidereDataUtils {
 
     public static String getMediaType(int type) {
         switch (type) {
-            case ParcelableMedia.Type.TYPE_IMAGE:
+            case ParcelableMedia.Type.IMAGE:
                 return "image";
-            case ParcelableMedia.Type.TYPE_VIDEO:
+            case ParcelableMedia.Type.VIDEO:
                 return "video";
-            case ParcelableMedia.Type.TYPE_ANIMATED_GIF:
+            case ParcelableMedia.Type.ANIMATED_GIF:
                 return "animated_gif";
-            case ParcelableMedia.Type.TYPE_CARD_ANIMATED_GIF:
+            case ParcelableMedia.Type.CARD_ANIMATED_GIF:
                 return "card_animated_gif";
-            case ParcelableMedia.Type.TYPE_EXTERNAL_PLAYER:
+            case ParcelableMedia.Type.EXTERNAL_PLAYER:
                 return "external_player";
             default:
                 return "unknown";
@@ -77,11 +79,11 @@ public class TwidereDataUtils {
             boolean hasImage = false;
             for (ParcelableMedia media : status.media) {
                 switch (media.type) {
-                    case ParcelableMedia.Type.TYPE_ANIMATED_GIF:
-                    case ParcelableMedia.Type.TYPE_CARD_ANIMATED_GIF:
-                    case ParcelableMedia.Type.TYPE_VIDEO:
+                    case ParcelableMedia.Type.ANIMATED_GIF:
+                    case ParcelableMedia.Type.CARD_ANIMATED_GIF:
+                    case ParcelableMedia.Type.VIDEO:
                         return TweetType.VIDEO;
-                    case ParcelableMedia.Type.TYPE_IMAGE: {
+                    case ParcelableMedia.Type.IMAGE: {
                         hasImage = true;
                         break;
                     }

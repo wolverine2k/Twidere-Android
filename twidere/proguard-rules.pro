@@ -15,19 +15,43 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
--dontobfuscate
 
--dontwarn sun.net.spi.**
--dontwarn java.nio.file.**
--dontwarn org.codehaus.mojo.**
+#-dontobfuscate
+
+-dontwarn com.squareup.haha.**
 -dontwarn com.makeramen.roundedimageview.**
+-dontwarn jnamed**
+-dontwarn org.xbill.DNS.**
+-dontwarn com.bluelinelabs.logansquare.**
+-dontwarn okio.**
+-dontwarn android.support.**
+-dontwarn com.afollestad.**
+-dontwarn com.facebook.stetho.**
+-dontwarn com.google.android.**
+-dontwarn okhttp3.**
+-dontwarn sun.net.spi.**
+-dontwarn sun.misc.**
+-dontwarn sun.nio.**
+-dontwarn java.nio.file.**
+
 
 -keepattributes *Annotation*
+-keepattributes EnclosingMethod
+-keepattributes SourceFile
+-keepattributes LineNumberTable
+-keepattributes Signature
+-keepattributes InnetClasses
 
 # https://github.com/bluelinelabs/LoganSquare
--keep class com.bluelinelabs.logansquare.** { *; }
+-keep class com.bluelinelabs.logansquare.annotation.JsonObject
+-keep class * extends com.bluelinelabs.logansquare.JsonMapper
 -keep @com.bluelinelabs.logansquare.annotation.JsonObject class *
--keep class **$$JsonObjectMapper { *; }
+
+-keep class org.mariotaku.twidere.api.twitter.annotation.NoObfuscate
+-keep @org.mariotaku.twidere.api.twitter.annotation.NoObfuscate class *
+
+# https://github.com/mariotaku/RestFu
+-keep class org.mariotaku.restfu.annotation.** { *; }
 
 # http://square.github.io/otto/
 -keepclassmembers class ** {
@@ -35,14 +59,15 @@
     @com.squareup.otto.Produce public *;
 }
 
--keepclassmembers class android.support.v7.internal.app.WindowDecorActionBar {
-    private android.support.v7.internal.widget.ActionBarContextView mContextView;
-    private android.support.v7.internal.widget.DecorToolbar mDecorToolbar;
-}
--keepclassmembers class android.support.v7.internal.widget.ActionBarOverlayLayout {
-    private android.graphics.drawable.Drawable mWindowContentOverlay;
+-keep class * extends android.support.v4.view.ActionProvider
+-keepclassmembers class * extends android.support.v4.view.ActionProvider {
+    <init>(android.content.Context);
 }
 
--keepclassmembers class org.mariotaku.twidere.activity.support.BrowserSignInActivity.InjectorJavaScriptInterface {
+-keepclassmembers class * {
+    private <fields>;
+}
+
+-keepclassmembers class org.mariotaku.twidere.activity.BrowserSignInActivity$InjectorJavaScriptInterface {
     public *;
 }

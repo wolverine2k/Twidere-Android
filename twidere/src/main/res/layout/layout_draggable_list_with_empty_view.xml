@@ -22,15 +22,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
     <FrameLayout
-        android:id="@+id/list_container"
+        android:id="@+id/listContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <com.mobeta.android.dslv.DragSortListView
-            android:id="@android:id/list"
+            android:id="@+id/listView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:collapsed_height="2dp"
@@ -49,21 +50,21 @@
             tools:visibility="gone"/>
 
         <LinearLayout
-            android:id="@android:id/empty"
+            android:id="@+id/emptyView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
             android:orientation="vertical"
             tools:visibility="visible">
 
-            <org.mariotaku.twidere.view.ActionIconView
-                android:id="@+id/empty_icon"
+            <org.mariotaku.twidere.view.IconActionView
+                android:id="@+id/emptyIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:color="?android:textColorSecondary"/>
 
             <TextView
-                android:id="@+id/empty_text"
+                android:id="@+id/emptyText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -74,12 +75,12 @@
     </FrameLayout>
 
     <FrameLayout
-        android:id="@+id/progress_container"
+        android:id="@+id/progressContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <ProgressBar
-            android:id="@android:id/progress"
+            android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"/>

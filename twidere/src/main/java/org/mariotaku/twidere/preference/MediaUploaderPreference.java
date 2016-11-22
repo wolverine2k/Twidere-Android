@@ -22,27 +22,28 @@ package org.mariotaku.twidere.preference;
 import android.content.Context;
 import android.util.AttributeSet;
 
-import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
 
-public class MediaUploaderPreference extends ServicePickerPreference implements Constants {
+import static org.mariotaku.twidere.constant.IntentConstants.INTENT_ACTION_EXTENSION_UPLOAD_MEDIA;
 
-	public MediaUploaderPreference(final Context context) {
-		super(context);
-	}
+public class MediaUploaderPreference extends ServicePickerPreference {
 
-	public MediaUploaderPreference(final Context context, final AttributeSet attrs) {
-		super(context, attrs);
-	}
+    public MediaUploaderPreference(final Context context) {
+        super(context);
+    }
 
-	@Override
-	protected String getIntentAction() {
-		return INTENT_ACTION_EXTENSION_UPLOAD_MEDIA;
-	}
+    public MediaUploaderPreference(final Context context, final AttributeSet attrs) {
+        super(context, attrs);
+    }
 
-	@Override
-	protected String getNoneEntry() {
-		return getContext().getString(R.string.image_uploader_default);
-	}
+    @Override
+    protected String getIntentAction() {
+        return INTENT_ACTION_EXTENSION_UPLOAD_MEDIA;
+    }
+
+    @Override
+    protected String getNoneEntry() {
+        return getContext().getString(R.string.media_uploader_default);
+    }
 
 }

@@ -24,6 +24,9 @@ import java.util.List;
 
 public class TwidereListUtils {
 
+    private TwidereListUtils() {
+    }
+
     public static List<Long> fromArray(final long[] array) {
         if (array == null) return null;
         final List<Long> list = new ArrayList<>();
@@ -48,13 +51,4 @@ public class TwidereListUtils {
         return builder.toString();
     }
 
-    public static String[] toStringArray(final List<?> list) {
-        if (list == null) return null;
-        final int length = list.size();
-        final String[] stringArray = new String[length];
-        for (int i = 0; i < length; i++) {
-            stringArray[i] = ParseUtils.parseString(list.get(i));
-        }
-        return stringArray;
-    }
 }

@@ -1,15 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-                  android:title="@string/network">
+<!--suppress AndroidElementNotAllowed -->
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="@string/network">
 
-    <org.mariotaku.twidere.preference.ImagePreloadPreference
-        android:key="image_preload_options"
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="media_preload"
         android:title="@string/media_preload"/>
 
-    <CheckBoxPreference
+    <SwitchPreferenceCompat
         android:defaultValue="true"
         android:key="preload_wifi_only"
         android:title="@string/preload_wifi_only"/>
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="bandwidth_saving_mode"
+        android:summary="@string/bandwidth_saving_mode_summary"
+        android:title="@string/bandwidth_saving_mode"/>
+
     <Preference
         android:fragment="org.mariotaku.twidere.fragment.SettingsDetailsFragment"
         android:title="@string/advanced">
@@ -17,5 +27,6 @@
             android:name="resid"
             android:value="@xml/preferences_advanced_network"/>
     </Preference>
+
 
 </PreferenceScreen>

@@ -17,16 +17,25 @@
   ~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <LinearLayout
-        android:id="@+id/api_editor_content"
+        android:id="@+id/apiEditorContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
+
+        <Button
+            android:id="@+id/loadDefaults"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/load_defaults"
+            android:visibility="gone"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -35,45 +44,46 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/label_api_url_format"
+                android:id="@+id/labelApiUrlFormat"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:singleLine="true"
                 android:text="@string/api_url_format"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
+                android:textAppearance="?android:attr/textAppearanceSmall"/>
 
-            <org.mariotaku.twidere.view.ActionIconView
-                android:id="@+id/api_url_format_help"
+            <org.mariotaku.twidere.view.IconActionView
+                android:id="@+id/apiUrlFormatHelp"
                 android:layout_width="@dimen/element_size_small"
                 android:layout_height="@dimen/element_size_small"
                 android:layout_weight="0"
                 android:background="?selectableItemBackground"
-                android:src="@drawable/ic_action_info" />
+                android:src="@drawable/ic_action_info"/>
         </LinearLayout>
 
         <EditText
-            android:id="@+id/api_url_format"
+            android:id="@+id/editApiUrlFormat"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
             android:inputType="textUri"
-            android:singleLine="true" />
+            android:singleLine="true"
+            tools:text="https://api.twitter.com/"/>
 
         <TextView
-            android:id="@+id/label_auth_type"
+            android:id="@+id/labelAuthType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/auth_type"
-            android:textAppearance="?android:attr/textAppearanceSmall" />
+            android:textAppearance="?android:attr/textAppearanceSmall"/>
 
         <HorizontalScrollView
-            android:id="@+id/auth_type_scroll"
+            android:id="@+id/authTypeScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
             <RadioGroup
-                android:id="@+id/auth_type"
+                android:id="@+id/editAuthType"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:orientation="horizontal">
@@ -83,31 +93,32 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/oauth" />
+                    android:text="@string/oauth"
+                    tools:checked="true"/>
 
                 <RadioButton
                     android:id="@+id/basic"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/basic" />
+                    android:text="@string/basic"/>
 
                 <RadioButton
-                    android:id="@+id/twip_o"
+                    android:id="@+id/twipO"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/twip_o" />
+                    android:text="@string/twip_o"/>
 
                 <RadioButton
                     android:id="@+id/xauth"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/xauth" />
+                    android:text="@string/xauth"/>
             </RadioGroup>
         </HorizontalScrollView>
 
-        <include layout="@layout/layout_api_editor_advanced_fields" />
+        <include layout="@layout/layout_api_editor_advanced_fields"/>
     </LinearLayout>
 </ScrollView>

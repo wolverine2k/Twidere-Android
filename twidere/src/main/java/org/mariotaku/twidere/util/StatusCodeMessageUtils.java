@@ -22,8 +22,8 @@ package org.mariotaku.twidere.util;
 import android.content.Context;
 import android.util.SparseIntArray;
 
+import org.mariotaku.microblog.library.twitter.model.ErrorInfo;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.api.twitter.model.ErrorInfo;
 
 public class StatusCodeMessageUtils {
 
@@ -42,6 +42,7 @@ public class StatusCodeMessageUtils {
         TWITTER_ERROR_CODE_MESSAGES.put(135, R.string.error_twitter_135);
         TWITTER_ERROR_CODE_MESSAGES.put(136, R.string.error_twitter_136);
         TWITTER_ERROR_CODE_MESSAGES.put(139, R.string.error_twitter_139);
+        TWITTER_ERROR_CODE_MESSAGES.put(144, R.string.error_twitter_144);
         TWITTER_ERROR_CODE_MESSAGES.put(161, R.string.error_twitter_161);
         TWITTER_ERROR_CODE_MESSAGES.put(162, R.string.error_twitter_162);
         TWITTER_ERROR_CODE_MESSAGES.put(172, R.string.error_twitter_172);
@@ -49,8 +50,12 @@ public class StatusCodeMessageUtils {
         TWITTER_ERROR_CODE_MESSAGES.put(ErrorInfo.STATUS_IS_DUPLICATE, R.string.error_twitter_187);
         TWITTER_ERROR_CODE_MESSAGES.put(193, R.string.error_twitter_193);
         TWITTER_ERROR_CODE_MESSAGES.put(215, R.string.error_twitter_215);
+        TWITTER_ERROR_CODE_MESSAGES.put(326, R.string.error_twitter_326);
 
         HTTP_STATUS_CODE_MESSAGES.put(407, R.string.error_http_407);
+    }
+
+    private StatusCodeMessageUtils() {
     }
 
     public static boolean containsHttpStatus(final int code) {
